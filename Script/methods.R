@@ -1,7 +1,11 @@
+library(dplyr)
+library(RMySQL)
+library(pryr)
+
 GetPromoterAnno <- function(organism){
   ucsc_db <- src_mysql(organism, 'genome-mysql.cse.ucsc.edu', user = 'genome')
   Ref_Flat <- tbl(ucsc_db, sql("SELECT geneName, chrom, strand, txStart, txEnd FROM refFlat"))
-  Promoter_Anno <- GetPromoters(Ref_Flat)
+  Promoter_Anno <- GetPromoters(as.data.frame(Ref_Flat))
 }
 
 ###### parallel computing
@@ -18,6 +22,7 @@ benchmark(a <- foreach(i = 1:3, .combine = c) %dopar% sqrt(4),
           replications = 1000,
           columns=c('test', 'elapsed', 'replications'))
 
+
 GetPromoters <- function(uctable){
   uctable <- uctable %>% 
     filter(sapply(strsplit(chrom, '_'), length) == 1)
@@ -27,11 +32,11 @@ GetPromoters <- function(uctable){
   ### A single gene might encode transcript on different chromsome, 
   ### strand or transcriptional start site
   uctable1 <- data.frame()
-  for(i in 1:length(uniqid)){
+  for(i in 1:length(uniqid$geneName)){
     cat(i, '\n')
-    index <- grep(paste('^', uniqid[i], '$', sep=''), uctable$V1)
-    temp <- unique(uctable$V3[index])
-    temp1 <- unique(uctable$V4[index])
+    index <- grep(paste('^', uniqid$geneName[i], '$', sep=''), uctable$geneName)
+    temp <- unique(uctable$chrom[index])
+    temp1 <- unique(uctable$strand[index])
     for(j in 1:length(temp)){
       for(k in 1:length(temp1)){
         index1 <- which(uctable[index,3] == temp[j] & uctable[index, 4] == temp1[k])
@@ -83,6 +88,14 @@ GetPromoters <- function(uctable){
   )
   
 }
+
+t1 <- Sys.time()
+
+temp <- GetPromoters(as.data.frame(Ref_Flat)[1:100,])
+
+t2 <- Sys.time()
+t2 - t1
+
 
 
 Wholegenome <- readDNAStringSet('../genomics/genome.fa', use.names = T)
