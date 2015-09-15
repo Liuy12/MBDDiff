@@ -5,7 +5,7 @@ library(pryr)
 GetPromoterAnno <- function(organism){
   ucsc_db <- src_mysql(organism, 'genome-mysql.cse.ucsc.edu', user = 'genome')
   Ref_Flat <- tbl(ucsc_db, sql("SELECT geneName, chrom, strand, txStart, txEnd FROM refFlat"))
-  Promoter_Anno <- GetPromoters(as.data.frame(Ref_Flat))
+  #Promoter_Anno <- GetPromoters(as.data.frame(Ref_Flat))
 }
 
 ###### parallel computing
@@ -23,7 +23,7 @@ benchmark(a <- foreach(i = 1:3, .combine = c) %dopar% sqrt(4),
           columns=c('test', 'elapsed', 'replications'))
 
 
-GetPromoters <- function(uctable){
+GetPromoters <- function(uctable, upstream, downstream){
   uctable <- uctable %>% 
     filter(sapply(strsplit(chrom, '_'), length) == 1)
   uniqid <- uctable %>%
@@ -45,7 +45,7 @@ GetPromoters <- function(uctable){
             temp2 <- unique(uctable[index[index1],5])
           else
             temp2 <- unique(uctable[index[index1],6])
-          temp3 <- data.frame(Symbol = rep(uniqid[i], length(temp2)),
+          temp3 <- data.frame(Symbol = paste(uniqid[i], '#', 1:length(index), sep=''),
                               Chrom = rep(temp[j], length(temp2)),
                               Strand = rep(temp1[k], length(temp2)),
                               TSS = temp2, stringsAsFactors = F)
@@ -54,39 +54,36 @@ GetPromoters <- function(uctable){
       }
     }
   }
-  
-  for(i in 1:nrow(uctable1)){
-    cat(i, '\n')
-    if(uctable1$Strand[i] == '+'){
-      index <- with(uctable1, which(uctable$V1 == Symbol[i] &
-                                      uctable$V3 == Chrom[i] &
-                                      uctable$V4 == Strand[i] &
-                                      uctable$V5 == TSS[i]))
-      uctable1$TES[i] <- max(uctable$V6[index])
-    }
-    else{
-      index <- with(uctable1, which(uctable$V1 == Symbol[i] &
-                                      uctable$V3 == Chrom[i] &
-                                      uctable$V4 == Strand[i] &
-                                      uctable$V6 == TSS[i]))
-      uctable1$TES[i] <- min(uctable$V5[index])
-    }
-  }
-  
-  for(i in 1:length(uniqid)){
-    cat(i, '\n')
-    index <- grep(paste('^', uniqid[i], '$', sep=''), uctable1$Symbol)
-    if(length(index) > 1)
-      uctable1$Symbol[index] <- paste(uniqid[i], '#', 1:length(index), sep='')
-  }
-  
+#   for(i in 1:nrow(uctable1)){
+#     cat(i, '\n')
+#     if(uctable1$Strand[i] == '+'){
+#       index <- with(uctable1, which(uctable$V1 == Symbol[i] &
+#                                       uctable$V3 == Chrom[i] &
+#                                       uctable$V4 == Strand[i] &
+#                                       uctable$V5 == TSS[i]))
+#       uctable1$TES[i] <- max(uctable$V6[index])
+#     }
+#     else{
+#       index <- with(uctable1, which(uctable$V1 == Symbol[i] &
+#                                       uctable$V3 == Chrom[i] &
+#                                       uctable$V4 == Strand[i] &
+#                                       uctable$V6 == TSS[i]))
+#       uctable1$TES[i] <- min(uctable$V5[index])
+#     }
+#   }
+#   
+#   for(i in 1:length(uniqid)){
+#     cat(i, '\n')
+#     index <- grep(paste('^', uniqid[i], '$', sep=''), uctable1$Symbol)
+#     if(length(index) > 1)
+#       uctable1$Symbol[index] <- paste(uniqid[i], '#', 1:length(index), sep='')
+#   }
   Promoter4k <- data.frame(chrom = uctable1$Chrom,
-                           chromStart = uctable1$TSS - 2000,
-                           chromEnd = uctable1$TSS + 2000,
+                           chromStart = ifelse(uctable1$Strand == '+', uctable1$TSS - upstream, uctable1$TSS - downstream),
+                           chromEnd = ifelse(uctable1$Strand == '+', uctable1$TSS + downstream, uctable1$TSS + upstream),
                            name = uctable1$Symbol,
                            Strand = uctable1$Strand
   )
-  
 }
 
 t1 <- Sys.time()
