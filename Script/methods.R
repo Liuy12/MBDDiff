@@ -72,38 +72,33 @@ CreateWindows <- function(chromlen, binsize){
 t2 <- Sys.time()
 t2 - t1
 
-########### exclude regions: 1. in promoter regions, 2. in CpG island regions 3. 
-ATCGcont <- letterFrequency(Wholegenome_100bp_fa, letters = 'ATCG', as.prob = T)
+########### exclude regions: 1. in promoter regions, 2. in CpG island regions 3. ATCG content is not 100%
+# linux code # get sequence file for each bin
+# bedtools getfasta -fi ../../genomics/genome.fa -bed Wholegenome_100bp.bed -fo Wholegenome_100bp.fa -name
 
-########## using CpG island program from UCSC
-CpGisland_new <- fread('bam file/CpGisland_new.bed')
+FilterRegions <- function(bed, fasta, Exbed){
+  registerDoMC(40)
+  t1 <- Sys.time()
+  Exclude_index <- ExcludeIntersection(bed, Exbed)
+  t2 <- Sys.time()
+  t2 - t1
+  letter_freq <- CountFreqency(fasta)
+  Exclude_index1 <- which(letter_freq$ATCG != 1)
+  Exclude_index_all <- Reduce(dplyr::union, list(Exclude_index, Exclude_index2, Exclude_index3))
+  return(bind_cols(bed[-Exclude_index_all,], letter_freq$CG))
+}
 
-registerDoMC(40)
-t1 <- Sys.time()
-Exclude_index <- ExcludeIntersection(Wholegenome_100bp_bed, hg4kpromoter)
-t2 <- Sys.time()
-t2 - t1
+CountFreqency <- function(fasta, CG = T, ATCG = T){
+  fasta_file <- readDNAStringSet(fasta,use.names = T)
+  Freqmat <- data.frame()
+  if(CG)
+    Freqmat$CG <- letterFrequency(fasta_file, letters = 'CG', as.prob = T)
+  if(ATCG)
+    Freqmat$ATCG <- letterFrequency(fasta_file, letters = 'ATCG', as.prob = T)
+  return(Freqmat)
+}
 
-registerDoMC(80)
-t1 <- Sys.time()
-Exclude_index1 <- ExcludeIntersection(Wholegenome_100bp_bed, CpGisland_new)
-t2 <- Sys.time()
-t2 - t1
-
-registerDoMC(80)
-t1 <- Sys.time()
-Exclude_index2 <- ExcludeIntersection(Wholegenome_100bp_bed, CpGisland_unmask)
-t2 <- Sys.time()
-t2 - t1
-
-hg4kpromoter <- mutate(hg4kpromoter, V7 = V2+2000)
-# hg4kpromoter_unique <- hg4kpromoter %>% 
-#   group_by(V1) %>%
-#   distinct(V7)
-Exclude_index3 <- which(Wholegenome_100bp_bed$ATCG != 1)
-#Exclude_index_100bp <- dplyr::union(Exclude_index, Exclude_index3)
-Exclude_index_100bp <- Reduce(dplyr::union, list(Exclude_index, Exclude_index2, Exclude_index3))
-
+########## Exclude intersection between regions
 ExcludeIntersection <- function(data1, data2){
   foreach (i=1:nrow(data2), .options.multicore=list(preschedule=FALSE), 
            .combine=c, .inorder=TRUE, .verbose=TRUE, 
@@ -132,16 +127,6 @@ ExcludeIntersection <- function(data1, data2){
 # done
 
 
-
-######### calculate GC content for each 100bp window
-
-# linux code
-#bedtools getfasta -fi ../../genomics/genome.fa -bed Wholegenome_100bp.bed -fo Wholegenome_100bp.fa -name
-
-Wholegenome_100bp_fa <- readDNAStringSet('bam file/Wholegenome_100bp.fa',use.names = T)
-GCcont <- letterFrequency(Wholegenome_100bp_fa, letters = 'CG', as.prob = T)
-
-
 ######### identify background region for each promoter and calculate background counts for each promoter 
 
 
@@ -150,34 +135,35 @@ GCcont <- letterFrequency(Wholegenome_100bp_fa, letters = 'CG', as.prob = T)
 ### all the genes have at least 4k up or down stream
 ### cannot find enough windows in -4k + 4k windows
 ### will try to find closest 80 windows (GC < 0.4), and choose 40 among them. 
-temp <- bind_cols(as.data.frame(RPKM_combined_100bp[-Exclude_index_100bp, c(1:3, 10)]), as.data.frame(Wholegenome_100bp_bed[-Exclude_index_100bp, 4]))
-colnames(temp) <- c(colnames(temp)[1:4], 'GC_content')
-
-registerDoMC(80)
-t1 <- Sys.time()
-Background_region <- foreach (i=1:nrow(hg4kpromoter), .options.multicore=list(preschedule=FALSE), 
-                              .combine=bind_rows, .inorder=TRUE, .verbose=TRUE, 
-                              .errorhandling='stop', .multicombine=TRUE) %dopar% {
-                                cat('promoter', i, '\t')
-                                preset <- filter(temp, Chrom == hg4kpromoter[i,1])
-                                preset <- mutate(preset, proximity = abs(Start - hg4kpromoter[i,7]))
-                                preset <- arrange(preset, proximity)
-                                k <- 0 
-                                bgregion <- c()
-                                for(j in 1:nrow(preset)){
-                                  if(preset[j,5] < 0.4){
-                                    k <- k + 1
-                                    bgregion <- bind_rows(bgregion, preset[j,])
+IdentifyBackground <- function(bed, promo_bed){
+  registerDoMC(80)
+  t1 <- Sys.time()
+  Background_region <- foreach (i=1:nrow(promo_bed), .options.multicore=list(preschedule=FALSE), 
+                                .combine=bind_rows, .inorder=TRUE, .verbose=TRUE, 
+                                .errorhandling='stop', .multicombine=TRUE) %dopar% {
+                                  cat('promoter', i, '\t')
+                                  preset <- filter(bed, Chrom == promo_bed[i,1])
+                                  preset <- mutate(preset, proximity = abs(Start - promo_bed[i,7]))
+                                  preset <- arrange(preset, proximity)
+                                  k <- 0 
+                                  bgregion <- c()
+                                  for(j in 1:nrow(preset)){
+                                    if(preset[j,5] < 0.4){
+                                      k <- k + 1
+                                      bgregion <- bind_rows(bgregion, preset[j,])
+                                    }
+                                    if(k == 80)
+                                      break
                                   }
-                                  if(k == 80)
-                                    break
+                                  bgregion <- arrange(bgregion, RPKM_average)
+                                  bgregion <- bgregion %>% dplyr::slice(1:40) %>% mutate(name = hg4kpromoter[i,4])
+                                  bgregion
                                 }
-                                bgregion <- arrange(bgregion, RPKM_average)
-                                bgregion <- bgregion %>% dplyr::slice(1:40) %>% mutate(name = hg4kpromoter[i,4])
-                                bgregion
-                              }
-t2 <- Sys.time()
-t2 - t1
+  t2 <- Sys.time()
+  t2 - t1
+}
+
+
 
 Background_region_aggre <- Background_region %>% group_by(name) %>% summarise(sum(RPKM_average)/40) %>%
   mutate(group = 'Background')
