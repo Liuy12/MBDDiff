@@ -2,11 +2,38 @@ library(dplyr)
 library(RMySQL)
 library(pryr)
 
-GetPromoterAnno <- function(organism){
+GetPromoterAnno <- function(organism, save = F, Dir = NULL){
   ucsc_db <- src_mysql(organism, 'genome-mysql.cse.ucsc.edu', user = 'genome')
   Ref_Flat <- tbl(ucsc_db, sql("SELECT geneName, chrom, strand, txStart, txEnd FROM refFlat"))
   Promoter_Anno <- GetPromoters(as.data.frame(Ref_Flat))
+  if(save){
+    if(is.null(Dir))
+      stop('please provide a path where annotation file will be saved')
+    write.table(Promoter_Anno, paste(Dir, '/Promoter_Anno.bed', sep = ''), quote = F, sep = '\t', row.names = F)
+  }
   return(Promoter_Anno)
+}
+
+bedtoolsr <- function(bamdir, bed){
+  bamfiles <- grep('.bam', dir(bamdir), value = T)
+  if(length(bamfiles))
+    stop('There are no bam files in the directory')
+  else{
+    bamfiles <- paste(bamdir, '/', bamfiles, sep ='')
+    temp1 <- c()
+    for(i in length(bamfiles)){
+      command <- paste('coverageBed -abam', bamfiles[i], '-b', bed, sep = ' ')
+      cat('processing: ', bamfiles[i], sep = '\t')
+      temp <- fread(input = command, data.table = F)
+      temp <- arrange(temp, V1, V2, V3)
+      temp1 <- bind_cols(temp1, temp$V6)
+    }
+    rownames(temp1) <- temp$V4
+    return(list(
+      count = temp1,
+      gaplength = temp[,(ncol(temp)-1)]
+      ))
+  }
 }
 
 
@@ -62,7 +89,8 @@ CreateWindows <- function(chromlen, binsize){
                                       bin <- seq(0, chromlen[i], by = binsize)
                                       temp <- data.frame(chrom = rep(names(chromlen)[i], length(bin)),
                                                          chromStart = bin,
-                                                         chromEnd = c(bin[2:length(bin)], chromlen[i])
+                                                         chromEnd = c(bin[2:length(bin)], chromlen[i]),
+                                                         name = paste(names(chromlen)[i], '_', 1:length(bin), sep ='')
                                       )
                                       temp
                                     }
@@ -76,6 +104,27 @@ t2 - t1
 # linux code # get sequence file for each bin
 # bedtools getfasta -fi ../../genomics/genome.fa -bed Wholegenome_100bp.bed -fo Wholegenome_100bp.fa -name
 
+Getfasta <- function(fa, bed, path = NULL){
+  if(is.null(fa))
+    stop('please provide sequence file')
+  if(is.null(path))
+    stop('please provide path where the sequence file will be saved')
+  command <- paste('bedtools getfasta -fi', 'fa', '-bed', bed, '-fo', gsub('.bed', '.fa', bed), sep = ' ')
+  try(system(command))
+}
+
+ConstructExRegions <- function(organism, promoter_anno, CpG = T){
+  if(CpG){
+    ucsc_db <- src_mysql(organism, 'genome-mysql.cse.ucsc.edu', user = 'genome')
+    CpGisland <- as.data.frame(tbl(ucsc_db, sql("SELECT chrom, chromStart, chromEnd FROM cpgIslandExtUnmasked")))
+    colnames(promoter_anno) <- colnames(CpGisland) <- c('chrom', 'start', 'end')
+    bind_rows(promoter_anno, as.data.frame(CpGisland))
+  }
+  else
+    promoter_anno
+}
+
+
 FilterRegions <- function(bed, fasta, Exbed){
   registerDoMC(40)
   t1 <- Sys.time()
@@ -85,7 +134,7 @@ FilterRegions <- function(bed, fasta, Exbed){
   letter_freq <- CountFreqency(fasta)
   Exclude_index1 <- which(letter_freq$ATCG != 1)
   Exclude_index_all <- Reduce(dplyr::union, list(Exclude_index, Exclude_index2, Exclude_index3))
-  return(bind_cols(bed[-Exclude_index_all,], letter_freq$CG))
+  return(bind_cols(bed[-Exclude_index_all,], letter_freq$CG[-Exclude_index_all]))
 }
 
 CountFreqency <- function(fasta, CG = T, ATCG = T){
@@ -155,14 +204,17 @@ IdentifyBackground <- function(bed, promo_bed){
                                     if(k == 80)
                                       break
                                   }
-                                  bgregion <- arrange(bgregion, RPKM_average)
-                                  bgregion <- bgregion %>% dplyr::slice(1:40) %>% mutate(name = hg4kpromoter[i,4])
+#                                  bgregion <- arrange(bgregion, RPKM_average)
+#                                  bgregion <- bgregion %>% dplyr::slice(1:40) %>% mutate(name = hg4kpromoter[i,4])
                                   bgregion
                                 }
   t2 <- Sys.time()
   t2 - t1
 }
 
+
+bgregion <- arrange(bgregion, RPKM_average)
+bgregion <- bgregion %>% dplyr::slice(1:40) %>% mutate(name = hg4kpromoter[i,4])
 
 
 Background_region_aggre <- Background_region %>% group_by(name) %>% summarise(sum(RPKM_average)/40) %>%
