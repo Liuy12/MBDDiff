@@ -212,33 +212,30 @@ IdentifyBackground <- function(bed, promo_bed){
   t2 - t1
 }
 
+CalculateTPM <- function(dataMat, gaplength){
+  libsize <- apply(dataMat, 2, sum)
+  gaplength <- t(pracma::repmat(gaplength, ncol(dataMat), 1))
+  dataMat_TPM <- (dataMat/gaplength)*10^6
+  return(apply(dataMat_TPM, 1, mean))
+}
 
-bgregion <- arrange(bgregion, RPKM_average)
-bgregion <- bgregion %>% dplyr::slice(1:40) %>% mutate(name = hg4kpromoter[i,4])
+Summerizebg <- function(dataMat_bg, gaplength){
+  dataMat_bg$TPM <- CalculateTPM(dataMat_bg, gaplength)
+  dataMat_bg <- dataMat_bg %>% 
+    group_by(name) %>% 
+    arrange(TPM) %>% 
+    dplyr::slice(1:40) %>% 
+    summarise_each(funs(sum)) %>% 
+    arrange(name) %>% 
+    select(-1)
+}
 
-
-Background_region_aggre <- Background_region %>% group_by(name) %>% summarise(sum(RPKM_average)/40) %>%
-  mutate(group = 'Background')
-colnames(Background_region_aggre) <- c('name', 'RPKM_average', 'group')
-
-
+MBDDiff <- function(promoter, background, conditions, method = "pooled", 
+                    sharingMode = "maximum", fitType = "local", pvals_only = FALSE, paraMethod='NP'){
+  XBSeq(promoter, background, conditions, method, 
+        sharingMode, fitType, pvals_only, paraMethod)
+}
 
 
 
 ######### GC enrichment test by yidong's matlab program 
-
-
-
-
-#Usage:
-
-
-Ref_Flat <- GetPromoterAnno('hg19')
-Ref_Flat <- as.data.frame(Ref_Flat)
-
-t1 <- Sys.time()
-
-temp <- GetPromoters(Ref_Flat[1:100,])
-
-t2 <- Sys.time()
-t2 - t1
