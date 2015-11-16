@@ -62,7 +62,7 @@ We have already generated promoter annotation file for several organisms includi
 Reads mapped to each promoter regions can be counted by using bedtools coveragebed function. We implemented a wrapper function in MBDDiff which basically calls bedtools internally. You will need to provide the path to '.bam' and '.bed' files:
 
 ```{r,message = FALSE, warning=FALSE, eval=FALSE}
-Promoter_counts <- bedtoolsr('/path/to/bam/files', '/path/to/bed/file')
+Promoter_counts <- bedtoolsr(bamdir = '/path/to/bam/files', bed = '/path/to/bed/file')
 ```
 
 The output is a list contains two elements, a matrix containing promoter mapped reads for each sample and a vector containing region length information. 
@@ -115,7 +115,7 @@ Details regarding each this function can be found in the manual page.
 We will follow a similar procedure as we did for promoter regions:
 
 ```{r,message = FALSE, warning=FALSE, eval=FALSE}
-Background_counts <- bedtoolsr('/path/to/bam/files', '/path/to/bg_bed/file')
+Background_counts <- bedtoolsr(bamdir = '/path/to/bam/files', bed = '/path/to/bg_bed/file')
 ```
 
 #### Summerize background mapped reads to each promoter
@@ -140,10 +140,62 @@ We provide several visualization functionalities to help you visulize sample rel
 
 #### Enrichment of GC content grouped by methylation levels
 
+Do this if you haven't already done so:
+
 ```{r,message = FALSE, warning=FALSE, eval=FALSE}
-MethyEnrich(bed, bam, fa)
+whole_genome_bin_count <- bedtoolsr(bed, bam)
+whole_genome_bin_count_TPM <- CalculateTPM(whole_genome_bin_count[[1]], whole_genome_bin_count[[2]])
 ```
 
+Then, we can generate enrichment of GC content grouped by methylation levels: 
+
+```{r,message = FALSE, warning=FALSE, eval=FALSE}
+MethyEnrich(whole_genome_bin_count_TPM, fa)
+```
+
+#### Distribution of promoter counts and background noise
+
+Extract XBSeqDataSet object from MBDDiff function and then plot the distribution using XBplot:
+
+```{r,message = FALSE, warning=FALSE, eval=FALSE}
+MBD <- TestStat[[1]]
+XBplot(MBD, Samplenum = 1, unit = 'LogTPM', Genelength = Promoter_counts[[2]])
+```
+
+#### 3d principal component analysis
+
+Firstly extract normalized reads and then generate 2d/3d pca plot:
+
+```{r,message = FALSE, warning=FALSE, eval=FALSE}
+Norm_count <- counts(MBD, normalized = TRUE)
+pcaplot(Norm_count, cv.Th = 0.1, method = 'pca', dimension = c(1,2,3), )
+```
+
+#### MAplot of promoters
+
+```{r,message = FALSE, warning=FALSE, eval=FALSE}
+MAplot(TestStat[[2]])
+DE_inex <- with(Testres, which(baseMean > quantile(baseMean)[2] & 
+                  abs(log2FoldChange) > 1 &
+                  padj < 0.1))
+```
+
+#### Heatmap of selected promoters
+
+```{r,message = FALSE, warning=FALSE, eval=FALSE}
+DE_index <- with(TestStat[[2]], which(baseMean > quantile(baseMean)[2] & 
+                  abs(log2FoldChange) > 1 &
+                  padj < 0.1))
+heatmap.3(Norm_count[DE_index,])
+```
+
+#### Dynamic visualization report
+
+MBDDiff also generate a dynamic html report containing all the figures above:
+
+```{r,message = FALSE, warning=FALSE, eval=FALSE}
+MBDDynamicReport(bin_count, fa, MBD, TestStat, )
+```
 
 
 ## Bug reports

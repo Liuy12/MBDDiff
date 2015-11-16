@@ -30,7 +30,6 @@ np$chart(useInteractiveGuideline = TRUE)
 np$xAxis(axisLabel = 'GC content')
 np$yAxis(axisLabel = 'Density')
 np$save('GCenrich.html', standalone = TRUE)
-return(np)  
 
 ######## histogram promoter count vs background count
 library(plotly)

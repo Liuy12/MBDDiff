@@ -4,6 +4,11 @@ library(pryr)
 library(doParallel)
 library(data.table)
 library(pracma)
+library(rgl)
+library(rCharts)
+library(plotly)
+library(slidify)
+library(slidifyLibraries)
 
 ## show a list of available organisms from UCSC database
 ShowAvailableOrg <- function(){
@@ -24,8 +29,15 @@ GetPromoterAnno <- function(organism, save = T, Dir = NULL){
   return(Promoter_Anno)
 }
 
-bedtoolsr <- function(bamdir, bed){
-  bamfiles <- grep('.bam', dir(bamdir), value = T)
+bedtoolsr <- function(bam == NULL, bamdir == NULL, bed){
+  if(is.null(bamdir)){
+    if(is.null(bam) | !file.exists(bam))
+      stop('bam file not provided or can not be found.')
+    else
+      bamfiles <- bam
+  }
+  else
+    bamfiles <- grep('.bam', dir(bamdir), value = T)
   if(length(bamfiles))
     stop('There are no bam files in the directory')
   else{

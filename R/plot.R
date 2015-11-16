@@ -1,45 +1,26 @@
 ## whole genome GC distribution by quantile of methylation levels. 
-MethyEnrich <- function(bed, bam, fa){
-  whole_genome_bin_count <- bedtoolsr(bed, bam)
-  whole_genome_bin_count_TPM <- CalculateTPM(whole_genome_bin_count[[1]], whole_genome_bin_count[[2]])
+MethyEnrich <- function(bin_count, fa){
   GCcon <- CountFreqency(fa, CG =T, ATCG = F)$CG
-  temp <- quantile(whole_genome_bin_count_TPM)
-  cuts <- cut(whole_genome_bin_count_TPM, breaks = unique(temp), labels = c('0-25%','25-50%', '50-75%', '75-100%'))
+  temp <- quantile(bin_count)
+  labels <- switch(length(unique(temp)),
+                   a = c('0-100%'),
+                   b = c('0-75%', '75-100%'),
+                   c = c('0-50%', '50-75%', '75-100%'),
+                   d = c('0-25%', '25-50%', '50-75%', '75-100%'))
+  cuts <- cut(bin_count, breaks = unique(temp), labels = labels)
+  cols <- c("black", "blue", "purple", "gray")[1:length(unique(temp))]
   temp1 <- bind_cols(temp, as.data.frame(cuts))
   colnames(temp1) <- c('RPKM', 'CG', 'cuts')
   ggplot() + 
     geom_density(aes(x = CG, color = cuts), adjust = 2, data = temp1)+
-    scale_colour_manual(values = c("black", "blue", "purple", "gray"))
-}
-
-
-## Distribution of methylation levels for promoter and background noise.
-Methydist <- function(promoter, background, gaplength_p, gaplength_b){
-  Promoter_TPM <- CalculateTPM(promoter, gaplength)
-  Background_TPM <- CalculateTPM(background, gaplength_b)
-  temp <- data.frame(
-    TPM <- Promoter_TPM,
-    group <- rep('Promoter', length(Promoter_TPM))
-  )
-  colnames(temp) <- c('TPM', 'group')
-  temp1 <- data.frame(
-    TPM <- Background_TPM,
-    group <- rep('Background', length(Background_TPM))
-  )
-  colnames(temp1) <- c('TPM', 'group')
-  temp2 <- bind_rows(temp, temp1)
-  ggplot() + 
-    geom_histogram(aes(x = count, y = ..density.., fill=group, alpha = group),  data = temp2, binwidth=1, position = 'identity')+
-    xlim(c(0,150)) +
-    scale_fill_manual(values = c('blue', 'red')) +
-    scale_alpha_manual(values = c(0.6, 0.6))
+    scale_colour_manual(values = cols)
 }
 
 
 ## 3d pca plot 
 pcaplot<-function (x, subset = NULL, cv.Th = 0.1, var.Th = 0, mean.Th =0, standardize = TRUE,
                    method = c("cluster", "mds","pca"), dimension = c(1,2,3), color = 'black', princurve=F,lwd=1,normals=NULL,col.curve='red', 
-                   text, main = NULL, psi = 4, type = 'p', ...)
+                   text = T, main = NULL, psi = 4, type = 'p', ...)
 {
   
   if (is.matrix(x)) {
@@ -106,7 +87,6 @@ pcaplot<-function (x, subset = NULL, cv.Th = 0.1, var.Th = 0, mean.Th =0, standa
         }
       }
     }
-    require('rgl')
     plot3d(ppoints[, dimension[1]], ppoints[, dimension[2]], ppoints[,dimension[3]],
            xlab = paste("Principal Component ",
                         dimension[1], " (", percent[dimension[1]], "%)",
@@ -143,7 +123,6 @@ pcaplot<-function (x, subset = NULL, cv.Th = 0.1, var.Th = 0, mean.Th =0, standa
       #         }
       #       }
     }
-    require('rgl')
     plot3d(ppoints[, dimension[1]], ppoints[, dimension[2]], ppoints[,dimension[3]],
            xlab = paste("Principal Component ",
                         dimension[1], " (", percent[dimension[1]], "%)",
@@ -172,7 +151,7 @@ pcaplot<-function (x, subset = NULL, cv.Th = 0.1, var.Th = 0, mean.Th =0, standa
 
 
 ## heatmap of promoter methylation intensity
-heatmap.my <- function(Exprs, sel=F, thres_mean, thres_var, numbreaks=100, col = c("blue","white","red"), 
+heatmap.3 <- function(Exprs, sel=F, thres_mean, thres_var, numbreaks=100, col = c("blue","white","red"), 
                        breakratio = c(2,1,2), colsidebar, Colv=F, Rowv=T, scale= 'row', labRow=F, 
                        labCol=F, dendrogram = 'row'){
   suppressPackageStartupMessages(invisible(require('gplots', quietly=TRUE)))
