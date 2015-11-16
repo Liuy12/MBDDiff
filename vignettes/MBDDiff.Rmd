@@ -71,13 +71,14 @@ The output is a list contains two elements, a matrix containing promoter mapped 
 
 We have already carried out following steps to identify background regions for several organisms including, human 'hg19' and 'hg38' build, mouse 'mm10' and 'mm9' build, rat 'rn6' and 'rn5' build. These files can be downloaded from Github: MBDDiff_files. 
 
-If you need to or want to learn how to construct background regions for your experiment, please carry out following steps.
+If you need to or want to learn how to construct background regions for your organism of interest, please carry out following steps.
 
 To identify regions that potentially contribute to
 background noise, we built a 100 bp tiling window across the
 whole genome:
 
 ```{r,message = FALSE, warning=FALSE, eval=FALSE}
+chromlen <- getChromLength('hg19')
 bed_100bp <- CreateWindows(chromlen, binsize)
 ```
 
@@ -90,32 +91,24 @@ window that resides in promoter regions, predicted CpG
 islands regions and windows that contains ambiguous bases
 (gaps)
 
-Firsly, extract sequence files for the newly constructed 100bp windows:
+Firstly, construct potentially functional regions to exclude from 100bp windows
 
-```{r,message = FALSE, warning=FALSE, eval=FALSE}
-Getfasta(fa, bed, path = 'path/to/save/file')
-```
-
-Then construct regions to exclude from 100bp windows:
-
-```{r,message = FALSE, warning=FALSE, eval=FALSE}
-Exclude_regions <- ConstructExRegions(organism, Promoter_anno) 
-```
+Then, extract sequence files for the newly constructed 100bp windows. The output fasta file will be used to calcualte GC content statistics in whole genome sliding windows:
 
 Finally, filter 100 bp windows by excluding those that intersect with functional elements
-
-```{r,message = FALSE, warning=FALSE, eval=FALSE}
-bed_100bp_filtered <- FilterRegions(bed_100bp, 'path/to/fasta', Exclude_regions) 
-```
 
 2. Construct preliminary background regions based on GC
 content: for each promoter region, identify 80 100bp
 windows nearby that has low in GC content (< 40%) and
 also relatively proximal to the corresponding TSS:
 
+All the above procedures can be done via one function:
+
 ```{r,message = FALSE, warning=FALSE, eval=FALSE}
-bed_100bp_bg <- IdentifyBackground(bed_100bp_filtered, Promoter_anno)
+bed_100bp_bg <- IdentifyBackground(organism = 'hg19', bed_path = 'path/to/bed', binsize = 100, promo_bed = Promoter_anno, cores = 4)
 ```
+
+Details regarding each this function can be found in the manual page. 
 
 #### Counting reads mapped to background regions
 
@@ -141,9 +134,17 @@ Condition <- c(rep('C1', 3), rep('C2', 3))
 TestStat <- MBDDiff(Promoter_counts, Background_counts_summe, Condition)
 ```
 
-#### Some visualization functionalities
+## Visualization functionalities of MBDDiff
 
 We provide several visualization functionalities to help you visulize sample relationships based on methylation profile; distribution of promoter vesus background mapped reads, etc. 
+
+#### Enrichment of GC content grouped by methylation levels
+
+```{r,message = FALSE, warning=FALSE, eval=FALSE}
+MethyEnrich(bed, bam, fa)
+```
+
+
 
 ## Bug reports
 Report bugs as issues on our [GitHub repository](https://github.com/Liuy12/MBDDiff/issues) or you can report directly to my email: liuy12@uthscsa.edu.

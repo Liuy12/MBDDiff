@@ -1,8 +1,18 @@
 library(dplyr)
 library(RMySQL)
 library(pryr)
+library(doParallel)
+library(data.table)
+library(pracma)
 
-GetPromoterAnno <- function(organism, save = F, Dir = NULL){
+## show a list of available organisms from UCSC database
+ShowAvailableOrg <- function(){
+  
+}
+
+GetPromoterAnno <- function(organism, save = T, Dir = NULL){
+  if(!organism %in% ShowAvailableOrg())
+    stop('Organism not found. Please call funcition ShowAvailabelOrg() to retrive a list of available organisms from UCSC.')
   ucsc_db <- src_mysql(organism, 'genome-mysql.cse.ucsc.edu', user = 'genome')
   Ref_Flat <- tbl(ucsc_db, sql("SELECT geneName, chrom, strand, txStart, txEnd FROM refFlat"))
   Promoter_Anno <- GetPromoters(as.data.frame(Ref_Flat))
@@ -77,11 +87,15 @@ GetPromoters <- function(uctable, upstream = 2000, downstream = 2000){
   return(Promoter4k)
 }
 
+## retrive chromsome length information from UCSC database.
+getChromLength <- function(){
+  
+}
 
 #### create window function to create 100bp window across whole genome
-registerDoMC(80)
-t1 <- Sys.time()
-CreateWindows <- function(chromlen, binsize){
+CreateWindows <- function(chromlen, binsize, cores = detectCores()){
+  cl <- makeCluster(cores)
+  registerDoParallel(cl)
   Wholegenome_bin <- foreach (i=1:length(chromlen), .options.multicore=list(preschedule=FALSE), 
                                     .combine=bind_rows, .inorder=TRUE, .verbose=TRUE, 
                                     .errorhandling='stop', .multicombine=TRUE) %dopar% {
@@ -97,24 +111,20 @@ CreateWindows <- function(chromlen, binsize){
   return(Wholegenome_bin)
 }
 
-t2 <- Sys.time()
-t2 - t1
-
 ########### exclude regions: 1. in promoter regions, 2. in CpG island regions 3. ATCG content is not 100%
-# linux code # get sequence file for each bin
-# bedtools getfasta -fi ../../genomics/genome.fa -bed Wholegenome_100bp.bed -fo Wholegenome_100bp.fa -name
-
-Getfasta <- function(fa, bed, path = NULL){
-  if(is.null(fa))
-    stop('please provide sequence file')
-  if(is.null(path))
-    stop('please provide path where the sequence file will be saved')
-  command <- paste('bedtools getfasta -fi', 'fa', '-bed', bed, '-fo', gsub('.bed', '.fa', bed), sep = ' ')
-  try(system(command))
+Getfasta <- function(fa, bed){
+  if(is.null(fa) | !file.exists(fa))
+    stop('Sequence file not provided or cannot be found')
+  if(is.null(bed) | !file.exists(bed))
+    stop('Bed file not provided or cannot be found')
+  command <- paste('bedtools getfasta -fi', fa, '-bed', bed, '-fo', gsub('.bed', '.fa', bed), sep = ' ')
+  system(command)
 }
 
 ConstructExRegions <- function(organism, promoter_anno, CpG = T){
   if(CpG){
+    if(!organism %in% ShowAvailableOrg())
+      stop('Organism not found. Please call funcition ShowAvailabelOrg() to retrive a list of available organisms from UCSC.')
     ucsc_db <- src_mysql(organism, 'genome-mysql.cse.ucsc.edu', user = 'genome')
     CpGisland <- as.data.frame(tbl(ucsc_db, sql("SELECT chrom, chromStart, chromEnd FROM cpgIslandExtUnmasked")))
     colnames(promoter_anno) <- colnames(CpGisland) <- c('chrom', 'start', 'end')
@@ -125,12 +135,8 @@ ConstructExRegions <- function(organism, promoter_anno, CpG = T){
 }
 
 
-FilterRegions <- function(bed, fasta, Exbed){
-  registerDoMC(40)
-  t1 <- Sys.time()
-  Exclude_index <- ExcludeIntersection(bed, Exbed)
-  t2 <- Sys.time()
-  t2 - t1
+FilterRegions <- function(bed, fasta, Exbed, cores = detectCores()){
+  Exclude_index <- ExcludeIntersection(bed, Exbed, cores = cores)
   letter_freq <- CountFreqency(fasta)
   Exclude_index1 <- which(letter_freq$ATCG != 1)
   Exclude_index_all <- Reduce(dplyr::union, list(Exclude_index, Exclude_index2, Exclude_index3))
@@ -148,7 +154,11 @@ CountFreqency <- function(fasta, CG = T, ATCG = T){
 }
 
 ########## Exclude intersection between regions
-ExcludeIntersection <- function(data1, data2){
+ExcludeIntersection <- function(data1, data2, cores = detectCores()){
+  if(ncol(data1) != ncol(data2))
+    stop('The two datasets must have equal column size.')
+  cl <- makeCluster(cores)
+  registerDoParallel(cl)
   foreach (i=1:nrow(data2), .options.multicore=list(preschedule=FALSE), 
            .combine=c, .inorder=TRUE, .verbose=TRUE, 
            .errorhandling='stop', .multicombine=TRUE) %dopar% {
@@ -163,30 +173,22 @@ ExcludeIntersection <- function(data1, data2){
            }
 }
 
-
-
-
-######### use bedtools to count reads aligned to each 100bp window
-
-## linux code
-# time for i in $(ls | grep .bam)
-# do   
-# echo $i
-# coverageBed -abam $i -b Wholegenome_100bp.bed > $i-wholegenome-100bp.txt
-# done
-
-
 ######### identify background region for each promoter and calculate background counts for each promoter 
-
-
 ### for each gene, get 40 100bp windows that have lowest average rpkm, then add the count
 ### together as the background estimation for this gene 
 ### all the genes have at least 4k up or down stream
 ### cannot find enough windows in -4k + 4k windows
-### will try to find closest 80 windows (GC < 0.4), and choose 40 among them. 
-IdentifyBackground <- function(bed, promo_bed){
-  registerDoMC(80)
-  t1 <- Sys.time()
+### will try to find closest 80 windows (GC < 0.4), and choose 40 among them based on methylation levels 
+
+IdentifyBackground <- function(organism, bed_path, binsize, promo_bed, cores = detectCores()){
+  cl <- makeCluster(cores)
+  registerDoParallel(cl)
+  chromlen <- getChromLength(organism)
+  bed_100bp <- CreateWindows(chromlen, binsize)
+  write.table(bed_100bp, paste(bed_path, '/bed_100bp.bed', sep = ''), quote = F, sep = '\t', row.names = F)
+  Exclude_regions <- ConstructExRegions(organism, promo_bed)
+  Getfasta(fa, bed_path)
+  bed_100bp_filtered <- FilterRegions(bed_100bp, gsub('.bed', '.fa', bed_path), Exclude_regions) 
   Background_region <- foreach (i=1:nrow(promo_bed), .options.multicore=list(preschedule=FALSE), 
                                 .combine=bind_rows, .inorder=TRUE, .verbose=TRUE, 
                                 .errorhandling='stop', .multicombine=TRUE) %dopar% {
@@ -204,15 +206,13 @@ IdentifyBackground <- function(bed, promo_bed){
                                     if(k == 80)
                                       break
                                   }
-#                                  bgregion <- arrange(bgregion, RPKM_average)
-#                                  bgregion <- bgregion %>% dplyr::slice(1:40) %>% mutate(name = hg4kpromoter[i,4])
                                   bgregion
                                 }
-  t2 <- Sys.time()
-  t2 - t1
 }
 
 CalculateTPM <- function(dataMat, gaplength){
+  if(nrow(dataMat) != length(gaplength))
+    stop('The row dimension of the dataset has to equal to the length of gap length.')
   libsize <- apply(dataMat, 2, sum)
   gaplength <- t(pracma::repmat(gaplength, ncol(dataMat), 1))
   dataMat_TPM <- (dataMat/gaplength)*10^6
@@ -232,10 +232,13 @@ Summerizebg <- function(dataMat_bg, gaplength){
 
 MBDDiff <- function(promoter, background, conditions, method = "pooled", 
                     sharingMode = "maximum", fitType = "local", pvals_only = FALSE, paraMethod='NP'){
-  XBSeq(promoter, background, conditions, method, 
-        sharingMode, fitType, pvals_only, paraMethod)
+  MBD <- XBSeqDataSet(promoter, background, conditions)
+  MBD <- estimateRealCount(MBD)
+  MBD <- estimateSizeFactors(MBD)
+  MBD <- estimateSCV(MBD, method=method, sharingMode=sharingMode, fitType=fitType)
+  Teststas <- XBSeqTest(MBD, levels(conditions)[1L], levels(conditions)[2L], method =paraMethod)
+  return(list(MBD, Teststas))
 }
-
 
 
 ######### GC enrichment test by yidong's matlab program 
