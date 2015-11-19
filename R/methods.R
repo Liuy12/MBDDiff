@@ -1,23 +1,23 @@
-library(dplyr)
-library(RMySQL)
-library(pryr)
-library(doParallel)
-library(data.table)
-library(pracma)
-library(rgl)
-library(rCharts)
-library(plotly)
-library(slidify)
-library(slidifyLibraries)
+# library(dplyr)
+# library(RMySQL)
+# library(pryr)
+# library(doParallel)
+# library(data.table)
+# library(pracma)
+# library(rgl)
+# library(rCharts)
+# library(plotly)
+# library(slidify)
+# library(slidifyLibraries)
 
 ## show a list of available organisms from UCSC database
 ShowAvailableOrg <- function(){
-  
+  return(data(Organisms))
 }
 
 GetPromoterAnno <- function(organism, save = T, Dir = NULL){
-  if(!organism %in% ShowAvailableOrg())
-    stop('Organism not found. Please call funcition ShowAvailabelOrg() to retrive a list of available organisms from UCSC.')
+  if(!organism %in% ShowAvailableOrg()[,2])
+    stop('Organism not found. Please call funcition ShowAvailabelOrg() to retrive a list of available organisms from UCSC. Remember to use accession code rather than the organism name directly.')
   ucsc_db <- src_mysql(organism, 'genome-mysql.cse.ucsc.edu', user = 'genome')
   Ref_Flat <- tbl(ucsc_db, sql("SELECT geneName, chrom, strand, txStart, txEnd FROM refFlat"))
   Promoter_Anno <- GetPromoters(as.data.frame(Ref_Flat))
@@ -100,8 +100,11 @@ GetPromoters <- function(uctable, upstream = 2000, downstream = 2000){
 }
 
 ## retrive chromsome length information from UCSC database.
-getChromLength <- function(){
-  
+GetChromLength <- function(organism){
+  if(!organism %in% ShowAvailableOrg()[,2])
+    stop('Organism not found. Please call funcition ShowAvailabelOrg() to retrive a list of available organisms from UCSC. Remember to use accession code rather than the organism name directly.')
+  ucsc_db <- src_mysql(organism, 'genome-mysql.cse.ucsc.edu', user = 'genome')
+  Ref_Flat <- tbl(ucsc_db, sql("SELECT chrom, size FROM chromInfo"))
 }
 
 #### create window function to create 100bp window across whole genome
@@ -135,8 +138,8 @@ Getfasta <- function(fa, bed){
 
 ConstructExRegions <- function(organism, promoter_anno, CpG = T){
   if(CpG){
-    if(!organism %in% ShowAvailableOrg())
-      stop('Organism not found. Please call funcition ShowAvailabelOrg() to retrive a list of available organisms from UCSC.')
+    if(!organism %in% ShowAvailableOrg()[,2])
+      stop('Organism not found. Please call funcition ShowAvailabelOrg() to retrive a list of available organisms from UCSC. Remember to use accession code rather than the organism name directly.')
     ucsc_db <- src_mysql(organism, 'genome-mysql.cse.ucsc.edu', user = 'genome')
     CpGisland <- as.data.frame(tbl(ucsc_db, sql("SELECT chrom, chromStart, chromEnd FROM cpgIslandExtUnmasked")))
     colnames(promoter_anno) <- colnames(CpGisland) <- c('chrom', 'start', 'end')
@@ -145,7 +148,6 @@ ConstructExRegions <- function(organism, promoter_anno, CpG = T){
   else
     promoter_anno
 }
-
 
 FilterRegions <- function(bed, fasta, Exbed, cores = detectCores()){
   Exclude_index <- ExcludeIntersection(bed, Exbed, cores = cores)
@@ -195,7 +197,7 @@ ExcludeIntersection <- function(data1, data2, cores = detectCores()){
 IdentifyBackground <- function(organism, bed_path, binsize, promo_bed, cores = detectCores()){
   cl <- makeCluster(cores)
   registerDoParallel(cl)
-  chromlen <- getChromLength(organism)
+  chromlen <- GetChromLength(organism)
   bed_100bp <- CreateWindows(chromlen, binsize)
   write.table(bed_100bp, paste(bed_path, '/bed_100bp.bed', sep = ''), quote = F, sep = '\t', row.names = F)
   Exclude_regions <- ConstructExRegions(organism, promo_bed)
@@ -224,7 +226,7 @@ IdentifyBackground <- function(organism, bed_path, binsize, promo_bed, cores = d
 
 CalculateTPM <- function(dataMat, gaplength){
   if(nrow(dataMat) != length(gaplength))
-    stop('The row dimension of the dataset has to equal to the length of gap length.')
+    stop('The row dimension of the dataset has to equal to the length of gap length. Remember to use accession code rather than the organism name directly.')
   libsize <- apply(dataMat, 2, sum)
   gaplength <- t(pracma::repmat(gaplength, ncol(dataMat), 1))
   dataMat_TPM <- (dataMat/gaplength)*10^6

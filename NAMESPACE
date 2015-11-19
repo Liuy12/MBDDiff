@@ -1,1 +1,25 @@
-exportPattern("^[[:alpha:]]+")
+export(
+"ShowAvailableOrg",
+"GetPromoterAnno",
+"bedtoolsr",
+"GetChromLehgth",
+"IdentifyBackground",
+"Summerizebg",
+"MBDDiff",
+"CalculateTPM",
+"MethyEnrich",
+"pcaplot",
+heatmap.3
+)
+
+import(
+"dplyr",
+"RMySQL",
+"doParallel",
+"rgl",
+"rCharts",
+"plotly"
+)
+
+importFrom('data.table', 'fread')
+importFrom('pracma', 'repmat')

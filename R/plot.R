@@ -1,5 +1,5 @@
 ## whole genome GC distribution by quantile of methylation levels. 
-MethyEnrich <- function(bin_count, fa){
+MethyEnrich <- function(bin_count, fa, interactive = F){
   GCcon <- CountFreqency(fa, CG =T, ATCG = F)$CG
   temp <- quantile(bin_count)
   labels <- switch(length(unique(temp)),
@@ -14,13 +14,37 @@ MethyEnrich <- function(bin_count, fa){
   ggplot() + 
     geom_density(aes(x = CG, color = cuts), adjust = 2, data = temp1)+
     scale_colour_manual(values = cols)
+  if(interactive){
+    dataMat <- filter(temp1, cuts == '0-25%')
+    denStat <-
+      density(dataMat$CG, from = min(temp1$CG), to = max(temp1$CG), adjust = 2)
+    denStat <- data.frame(x = denStat$x,
+                          y = denStat$y)
+    denStat1 <- sapply(1:length(levels(temp1$cuts)), function(i) {
+      dataMat <- filter(temp1, cuts == levels(temp1$cuts)[i])
+      preset <-
+        density(dataMat$CG, from = min(temp1$CG), to = max(temp1$CG), adjust = 2)
+      preset$y
+    })
+    colnames(denStat1) <- levels(temp1$cuts)
+    denStat1 <- stack(as.data.frame(denStat1))
+    denStat <-
+      cbind(rep(denStat[,1], times = length(levels(temp1$cuts))), denStat1)
+    colnames(denStat) <- c('GC', 'Density', 'ind')
+    np <-
+      nPlot(Density ~ GC, group = 'ind', data = denStat, type = 'lineChart')
+    np$chart(useInteractiveGuideline = TRUE)
+    np$xAxis(axisLabel = 'GC content')
+    np$yAxis(axisLabel = 'Density')
+    np
+  }
 }
 
 
 ## 3d pca plot 
 pcaplot<-function (x, subset = NULL, cv.Th = 0.1, var.Th = 0, mean.Th =0, standardize = TRUE,
                    method = c("cluster", "mds","pca"), dimension = c(1,2,3), color = 'black', princurve=F,lwd=1,normals=NULL,col.curve='red', 
-                   text = T, main = NULL, psi = 4, type = 'p', ...)
+                   text = T, main = NULL, psi = 4, type = 'p',interactive = F, ...)
 {
   
   if (is.matrix(x)) {
@@ -106,6 +130,14 @@ pcaplot<-function (x, subset = NULL, cv.Th = 0.1, var.Th = 0, mean.Th =0, standa
              col = color, texts = colnames(dataMatrix), cex = 1)
     attr(ppoints, "geneNum") <- length(subset)
     pp<-ppoints
+    if(interactive)
+      scatterplot3js(ppoints[,1], ppoints[,2], ppoints[,3], 
+                     labels = colnames(x), 
+                     axisLabels = c(paste('PC1 (', percent[1], '%)', sep = ''),
+                                    paste('PC2 (', percent[2], '%)', sep = ''),
+                                    paste('PC3 (', percent[3], '%)', sep = '')),
+                     color = color,
+                     renderer = 'canvas', bg = 'white')
     return(pp)
   }
   if (method=="pca") {
@@ -142,6 +174,14 @@ pcaplot<-function (x, subset = NULL, cv.Th = 0.1, var.Th = 0, mean.Th =0, standa
              col = color, texts = colnames(dataMatrix), cex = 1)
     }
     pp<-ppoints
+    if(interactive)
+      scatterplot3js(ppoints[,1], ppoints[,2], ppoints[,3], 
+                     labels = colnames(x), 
+                     axisLabels = c(paste('PC1 (', percent[1], '%)', sep = ''),
+                                    paste('PC2 (', percent[2], '%)', sep = ''),
+                                    paste('PC3 (', percent[3], '%)', sep = '')),
+                     color = color,
+                     renderer = 'canvas', bg = 'white')
     return(pp)
   }
   else {
@@ -153,7 +193,7 @@ pcaplot<-function (x, subset = NULL, cv.Th = 0.1, var.Th = 0, mean.Th =0, standa
 ## heatmap of promoter methylation intensity
 heatmap.3 <- function(Exprs, sel=F, thres_mean, thres_var, numbreaks=100, col = c("blue","white","red"), 
                        breakratio = c(2,1,2), colsidebar, Colv=F, Rowv=T, scale= 'row', labRow=F, 
-                       labCol=F, dendrogram = 'row'){
+                       labCol=F, dendrogram = 'row', interactive = F){
   suppressPackageStartupMessages(invisible(require('gplots', quietly=TRUE)))
   if(labRow)
     labRow <- rownames(Exprs)
@@ -225,6 +265,15 @@ heatmap.3 <- function(Exprs, sel=F, thres_mean, thres_var, numbreaks=100, col = 
   heatmap.2(Exprs, Colv=Colv,Rowv=Rowv, dendrogram = dendrogram,trace='none',scale=scale ,density.info='none',
             lmat=lmat,lwid=lwid,lhei=lhei,labRow=labRow,labCol=labCol,col=hmcols,breaks=bk, 
             ColSideColors=colsidebar) 
+  if(interactive){
+    ol <- hclust(dist(Exprs_scale))$order
+    vals <- unique(c(Exprs_scale))
+    o <- order(vals, decreasing = FALSE)
+    cols <- colorRampPalette(c("blue","white","red"))(vals)
+    colz <- setNames(data.frame(vals[o], cols[o]), NULL)
+    plot_ly(z = Exprs_scale[ol,],colorscale = colz, x = colnames(Exprs_scale),  y = rownames(Exprs_scale), type = "heatmap", colorbar = list(title = 'colorkey')) %>%
+      layout(xaxis = list(title = ''), yaxis = list(title = ''))
+  }
 }
 
 ## enrichment score calculated by yidong's program

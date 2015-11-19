@@ -73,23 +73,9 @@ We have already carried out following steps to identify background regions for s
 
 If you need to or want to learn how to construct background regions for your organism of interest, please carry out following steps.
 
-To identify regions that potentially contribute to
-background noise, we built a 100 bp tiling window across the
-whole genome:
+To identify regions that potentially contribute to background noise, we built a 100 bp tiling window across the whole genome. In order to identify the regions for measuring background noise, we applied following procedures:
 
-```{r,message = FALSE, warning=FALSE, eval=FALSE}
-chromlen <- getChromLength('hg19')
-bed_100bp <- CreateWindows(chromlen, binsize)
-```
-
-In order to identify the regions
-for measuring background noise, we applied following
-procedures:
-
-1. Filtering step: In all the 100 bp windows, exclude any
-window that resides in promoter regions, predicted CpG
-islands regions and windows that contains ambiguous bases
-(gaps)
+1. Filtering step: In all the 100 bp windows, exclude any window that resides in promoter regions, predicted CpG islands regions and windows that contains ambiguous bases (gaps)
 
 Firstly, construct potentially functional regions to exclude from 100bp windows
 
@@ -175,9 +161,6 @@ pcaplot(Norm_count, cv.Th = 0.1, method = 'pca', dimension = c(1,2,3), )
 
 ```{r,message = FALSE, warning=FALSE, eval=FALSE}
 MAplot(TestStat[[2]])
-DE_inex <- with(Testres, which(baseMean > quantile(baseMean)[2] & 
-                  abs(log2FoldChange) > 1 &
-                  padj < 0.1))
 ```
 
 #### Heatmap of selected promoters
@@ -191,11 +174,6 @@ heatmap.3(Norm_count[DE_index,])
 
 #### Dynamic visualization report
 
-MBDDiff also generate a dynamic html report containing all the figures above:
-
-```{r,message = FALSE, warning=FALSE, eval=FALSE}
-MBDDynamicReport(bin_count, fa, MBD, TestStat, )
-```
 
 
 ## Bug reports
