@@ -2,7 +2,7 @@ export(
 "ShowAvailableOrg",
 "GetPromoterAnno",
 "bedtoolsr",
-"GetChromLehgth",
+"GetChromLength",
 "IdentifyBackground",
 "Summerizebg",
 "MBDDiff",

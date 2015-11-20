@@ -29,7 +29,7 @@ GetPromoterAnno <- function(organism, save = T, Dir = NULL){
   return(Promoter_Anno)
 }
 
-bedtoolsr <- function(bam == NULL, bamdir == NULL, bed){
+bedtoolsr <- function(bam = NULL, bamdir = NULL, bed){
   if(is.null(bamdir)){
     if(is.null(bam) | !file.exists(bam))
       stop('bam file not provided or can not be found.')

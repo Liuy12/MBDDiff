@@ -4,13 +4,12 @@ Title: MBDDiff for processing MBDcap-seq datasets
 Version: 0.99.0
 Date: 2015-11-09
 Author: Yuanhang Liu
-Maintainer: Yuanhang Liu <liuy12@livemail.uthscsa.edu>
-Description: Here we presented anovel algorithm, termed MBDDiff, implemented as an R package thatis designed specifically for processing MBDCap-seq datasets.MBDDiff contains three modules: quality assessment of datasets andquantification of DNA methylation; determination of differentialmethylation of promoter regions; and visualization functionalities.
+Maintainer: Yuanhang Liu <liuy12@uthscsa.edu>
+Description: Here we presented a novel algorithm, termed MBDDiff, implemented as an R package that is designed specifically for processing MBDCap-seq datasets. MBDDiff contains three modules: quality assessment of datasets and quantification of DNA methylation; determination of differential methylation of promoter regions; and visualization functionalities.
 License: GPL (>=3)
-Imports: dplyr, RMySQL, doParallel, data.table, pracma, rgl, rCharts, plotly, solidify, slidifyLibraries, XBSeq
+Imports: dplyr, RMySQL, doParallel, data.table, pracma, rgl, rCharts, plotly, XBSeq
 Depends: R (>= 3.2.0)
 Suggests: knitr, rmarkdown, BiocStyle, testthat
 VignetteBuilder: knitr
 biocViews: DNAMethylation, CpGIsland, QualityControl, Sequencing, Software, Visualization, ExperimentalDesign
-
 

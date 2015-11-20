@@ -2,25 +2,27 @@
 \alias{bedtoolsr}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-%%  ~~function to do ... ~~
+Counting reads mapped to a specified region using bedtools
 }
 \description{
-%%  ~~ A concise (1-5 lines) description of what the function does. ~~
+   Given bam file or directories of bam files, counting reads mapped to genomic intervals specified by user. 
 }
 \usage{
-bedtoolsr(bamdir, bed)
+   bedtoolsr(bam = NULL, bamdir = NULL, bed)
 }
-%- maybe also 'usage' for other objects documented here.
 \arguments{
+  \item{bam}{
+   bam file, including absolute path of the file. This is usually the output of alignment programs like, bwa, bowtie, etc. 
+}
   \item{bamdir}{
-%%     ~~Describe \code{bamdir} here~~
+   Alternatively, you can also provide the path of a list of bam files to process all at once.
 }
   \item{bed}{
-%%     ~~Describe \code{bed} here~~
+   beb files, which include genomic intervels you want to measure.
 }
 }
 \details{
-%%  ~~ If necessary, more details than the description above ~~
+   
 }
 \value{
 %%  ~Describe the value returned
