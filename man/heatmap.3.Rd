@@ -1,172 +1,72 @@
-\name{heatmap.my}
-\alias{heatmap.my}
-%- Also NEED an '\alias' for EACH other topic documented here.
-\title{
-%%  ~~function to do ... ~~
-}
+\name{heatmap.3}
+\alias{heatmap.3}
+\title{More customized heatmap that allow control over color key}
 \description{
-%%  ~~ A concise (1-5 lines) description of what the function does. ~~
+    More customized heatmap that is designed based on heatmap.2 that gives user control over color key
 }
 \usage{
-heatmap.my(Exprs, sel = F, thres_mean, thres_var, numbreaks = 100, col = c("blue", "white", "red"), breakratio = c(2, 1, 2), colsidebar, Colv = F, Rowv = T, scale = "row", labRow = F, labCol = F, dendrogram = "row")
+heatmap.3(Exprs, sel = F, thres_mean, thres_var, numbreaks = 100, col = c("blue", "white", "red"), breakratio = c(2, 1, 2), colsidebar, Colv = F, Rowv = T, scale = "row", labRow = F, labCol = F, dendrogram = "row", interactive =F)
 }
-%- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{Exprs}{
-%%     ~~Describe \code{Exprs} here~~
-}
+  A numeric matrix or data.frame
+  }
   \item{sel}{
-%%     ~~Describe \code{sel} here~~
-}
+  Whether you want to pre-filter the genes first based on average expression and variance
+  }
   \item{thres_mean}{
-%%     ~~Describe \code{thres_mean} here~~
-}
+  If 'sel' is set to TRUE, what threshold you wanna use for average expression
+  }
   \item{thres_var}{
-%%     ~~Describe \code{thres_var} here~~
-}
+  If 'sel' is set to TRUE, what threshold you wanna use for variance
+  }
   \item{numbreaks}{
-%%     ~~Describe \code{numbreaks} here~~
-}
+  The number of breaks for colorkey. Default to 100
+  }
   \item{col}{
-%%     ~~Describe \code{col} here~~
-}
+  A vector of length 3 of colors you want to use for colorkey. Default to c("blue", "white", "red")
+  }
   \item{breakratio}{
-%%     ~~Describe \code{breakratio} here~~
-}
+  How you wanna the colorkey to be partitioned according to the colors.
+  }
   \item{colsidebar}{
-%%     ~~Describe \code{colsidebar} here~~
-}
+  Whether you want to add a column side bar above the heatmap
+  }
   \item{Colv}{
-%%     ~~Describe \code{Colv} here~~
-}
+  Logical value indicating whether you want to perform clustering on columns
+  }
   \item{Rowv}{
-%%     ~~Describe \code{Rowv} here~~
-}
+  Logical value indicating whether you want to perform clustering on rows
+  }
   \item{scale}{
-%%     ~~Describe \code{scale} here~~
-}
+  Whether you want to scale the input matrix row-wise or column wise so that each row or column has mean equals to 0 and variance equals to 1. Possible values are 'row' and 'column'
+  }
   \item{labRow}{
-%%     ~~Describe \code{labRow} here~~
-}
+  Logical value indicating whether you want to label rows based on row names of input matrix
+  }
   \item{labCol}{
-%%     ~~Describe \code{labCol} here~~
-}
+   Logical value indicating whether you want to label columns based on column names of input matrix 
+  }
   \item{dendrogram}{
-%%     ~~Describe \code{dendrogram} here~~
-}
-}
-\details{
-%%  ~~ If necessary, more details than the description above ~~
-}
-\value{
-%%  ~Describe the value returned
-%%  If it is a LIST, use
-%%  \item{comp1 }{Description of 'comp1'}
-%%  \item{comp2 }{Description of 'comp2'}
-%% ...
-}
-\references{
-%% ~put references to the literature/web site here ~
-}
-\author{
-%%  ~~who you are~~
-}
-\note{
-%%  ~~further notes~~
-}
-
-%% ~Make other sections like Warning with \section{Warning }{....} ~
-
-\seealso{
-%% ~~objects to See Also as \code{\link{help}}, ~~~
-}
-\examples{
-##---- Should be DIRECTLY executable !! ----
-##-- ==>  Define data, use random,
-##--	or do  help(data=index)  for the standard data sets.
-
-## The function is currently defined as
-function (Exprs, sel = F, thres_mean, thres_var, numbreaks = 100, 
-    col = c("blue", "white", "red"), breakratio = c(2, 1, 2), 
-    colsidebar, Colv = F, Rowv = T, scale = "row", labRow = F, 
-    labCol = F, dendrogram = "row") 
-{
-    suppressPackageStartupMessages(invisible(require("gplots", 
-        quietly = TRUE)))
-    if (labRow) 
-        labRow <- rownames(Exprs)
-    if (labCol) 
-        labCol <- colnames(Exprs)
-    if (sel) {
-        gene_mean <- apply(Exprs, 1, mean)
-        gene_var <- apply(Exprs, 1, var)
-        Exprs <- Exprs[gene_mean > thres_mean & gene_var > thres_var, 
-            ]
-    }
-    if (scale == "row") 
-        Exprs_scale <- t(scale(t(Exprs)))
-    else Exprs_scale <- Exprs
-    if (missing(colsidebar)) {
-        lmat <- rbind(c(0, 4), c(0, 3), c(2, 1))
-        lwid <- c(1, 4)
-        lhei <- c(1, 0.1, 4)
-        if (class(Colv) == "dendrogram") {
-            lhei <- c(1, 1, 4)
-            dendrogram <- "both"
-        }
-    }
-    else {
-        if (class(Colv) == "dendrogram") {
-            lmat <- rbind(c(0, 5), c(0, 4), c(3, 2), c(0, 1))
-            lwid <- c(1, 4)
-            lhei <- c(1, 1, 4, 0.25)
-            dendrogram <- "both"
-        }
-        else {
-            if (Colv) {
-                lmat <- rbind(c(0, 5), c(0, 4), c(3, 2), c(0, 
-                  1))
-                lwid <- c(1, 4)
-                lhei <- c(1, 1, 4, 0.25)
-                dendrogram <- "both"
-            }
-            lmat <- rbind(c(0, 5), c(0, 1), c(3, 2), c(0, 4))
-            lwid <- c(1, 4)
-            lhei <- c(1, 0.25, 4, 0.1)
-        }
-    }
-    rg <- quantile(Exprs_scale, na.rm = T)
-    rg_diff <- rg[4] - rg[2]
-    rg_max <- max(abs(rg))
-    Exprs_sd <- sd(Exprs_scale)
-    Exprs_mean <- mean(Exprs_scale)
-    if (rg_max > max(abs(c(Exprs_mean + 3 * Exprs_sd, Exprs_mean - 
-        3 * Exprs_sd)))) {
-        rg_iqr <- max(abs(c(rg[2], rg[4])))
-        bp <- c((breakratio[1]/sum(breakratio)) * rg_diff - rg_iqr, 
-            rg_iqr - (breakratio[3]/sum(breakratio)) * rg_diff)
-        bk <- c(seq(-rg_max, -rg_iqr, length = numbreaks), seq(-rg_iqr, 
-            bp[1], length = numbreaks), seq(bp[1], bp[2], length = numbreaks), 
-            seq(bp[2], rg_iqr, length = numbreaks), seq(rg_iqr, 
-                rg_max, length = numbreaks))
-        hmcols <- colorRampPalette(col)(length(bk) - 1)
-    }
-    else {
-        rg <- range(Exprs_scale, na.rm = T)
-        bp <- c((breakratio[1]/sum(breakratio)) * diff(rg) - 
-            rg_max, rg_max - (breakratio[3]/sum(breakratio)) * 
-            diff(rg))
-        bk <- c(seq(-rg_max, bp[1], length = numbreaks), seq(bp[1], 
-            bp[2], length = numbreaks), seq(bp[2], rg_max, length = numbreaks))
-        hmcols <- colorRampPalette(col)(length(bk) - 1)
-    }
-    heatmap.2(Exprs, Colv = Colv, Rowv = Rowv, dendrogram = dendrogram, 
-        trace = "none", scale = scale, density.info = "none", 
-        lmat = lmat, lwid = lwid, lhei = lhei, labRow = labRow, 
-        labCol = labCol, col = hmcols, breaks = bk, ColSideColors = colsidebar)
+  One of values in "both", "row", "column", "none". Indicating how you wanna the dendrogram to be drawn
+  }
+  \item{interactive}{
+  Logical value indicating whether you wanna to generate a dynamic heatmap which is generated with plotly package
   }
 }
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory.
-\keyword{ ~kwd1 }
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+\details{
+   heatmap.3 internally calls heatmap.2 from gplots package, which uses layout to arragent the plot elements. Consequentially, it can not be used in a multi column/row layout using layout(...), par(mfrow=...) or (mfcol=...).
+}
+\references{
+    https://github.com/Liuy12/Kaggle
+}
+\author{
+    Yuanhang Liu
+}
+\seealso{
+    \link{\code{heatmap.2}}
+}
+\examples{
+    data(PromoterCount)
+    heatmap.3(PromoterCount[1:100,])
+}

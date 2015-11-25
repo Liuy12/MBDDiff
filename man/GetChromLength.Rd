@@ -1,28 +1,30 @@
-\name{t1}
-\alias{t1}
-\docType{data}
-\title{
-%%   ~~ data name/kind ... ~~
-}
+\name{GetChromLength}
+\alias{GetChromLength}
+\title{Retrive chromsome length information from UCSC database}
 \description{
-%%  ~~ A concise (1-5 lines) description of the dataset. ~~
+Retrive chromsome length information from UCSC MySQL database 
 }
-\usage{data("t1")}
-\format{
-  The format is:
- POSIXct[1:1], format: "2015-11-09 23:35:03"
+\usage{GetChromLength(organism)}
+\arguments{
+	\item{organism}{
+	The accession code of organisms to UCSC database.
+	}
 }
 \details{
-%%  ~~ If necessary, more details than the __description__ above ~~
+	To get a list of availabe organisms in UCSC database, see \code{\link{ShowAvailableOrg}}
 }
-\source{
-%%  ~~ reference to a publication or URL from which the data were obtained ~~
+\value{
+	A data.frame that contains chromesome information:
+	\item{chrom}{
+	chromsome number
+	}
+	\item{size}{
+	chromsome length
+	}
 }
 \references{
-%%  ~~ possibly secondary sources and usages ~~
+	https://github.com/Liuy12/MBDDiff
 }
 \examples{
-data(t1)
-## maybe str(t1) ; plot(t1) ...
+GetChromLength('hg19')
 }
-\keyword{datasets}

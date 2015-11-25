@@ -118,8 +118,7 @@ CreateWindows <- function(chromlen, binsize, cores = detectCores()){
                                       bin <- seq(0, chromlen[i], by = binsize)
                                       temp <- data.frame(chrom = rep(names(chromlen)[i], length(bin)),
                                                          chromStart = bin,
-                                                         chromEnd = c(bin[2:length(bin)], chromlen[i]),
-                                                         name = paste(names(chromlen)[i], '_', 1:length(bin), sep ='')
+                                                         chromEnd = c(bin[2:length(bin)], chromlen[i])
                                       )
                                       temp
                                     }
@@ -154,7 +153,9 @@ FilterRegions <- function(bed, fasta, Exbed, cores = detectCores()){
   letter_freq <- CountFreqency(fasta)
   Exclude_index1 <- which(letter_freq$ATCG != 1)
   Exclude_index_all <- Reduce(dplyr::union, list(Exclude_index, Exclude_index2, Exclude_index3))
-  return(bind_cols(bed[-Exclude_index_all,], letter_freq$CG[-Exclude_index_all]))
+  Filter_regions <- bind_cols(bed[-Exclude_index_all,], letter_freq$CG[-Exclude_index_all])
+  colnames(Filter_regions) <- c('chrom', 'chromStart', 'chromEnd', 'GC')
+  return(Filter_regions)
 }
 
 CountFreqency <- function(fasta, CG = T, ATCG = T){
@@ -194,11 +195,12 @@ ExcludeIntersection <- function(data1, data2, cores = detectCores()){
 ### cannot find enough windows in -4k + 4k windows
 ### will try to find closest 80 windows (GC < 0.4), and choose 40 among them based on methylation levels 
 
-IdentifyBackground <- function(organism, bed_path, binsize, promo_bed, cores = detectCores()){
+IdentifyBackground <- function(organism, bed_path, binsize = 100, promo_bed, cores = detectCores()){
   cl <- makeCluster(cores)
   registerDoParallel(cl)
   chromlen <- GetChromLength(organism)
   bed_100bp <- CreateWindows(chromlen, binsize)
+  bed_path <- paste(bed_path, '/bed_100bp.bed', sep = '')
   write.table(bed_100bp, paste(bed_path, '/bed_100bp.bed', sep = ''), quote = F, sep = '\t', row.names = F)
   Exclude_regions <- ConstructExRegions(organism, promo_bed)
   Getfasta(fa, bed_path)
@@ -207,8 +209,9 @@ IdentifyBackground <- function(organism, bed_path, binsize, promo_bed, cores = d
                                 .combine=bind_rows, .inorder=TRUE, .verbose=TRUE, 
                                 .errorhandling='stop', .multicombine=TRUE) %dopar% {
                                   cat('promoter', i, '\t')
-                                  preset <- filter(bed, Chrom == promo_bed[i,1])
-                                  preset <- mutate(preset, proximity = abs(Start - promo_bed[i,7]))
+                                  preset <- filter(bed_100bp_filtered, chrom == promo_bed[i,2])
+                                  preset <- mutate(preset, proximity = abs(chromStart - promo_bed[i,4]), 
+                                                   geneName = promo_bed[i,1])
                                   preset <- arrange(preset, proximity)
                                   k <- 0 
                                   bgregion <- c()

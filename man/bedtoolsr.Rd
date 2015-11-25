@@ -22,59 +22,26 @@ Counting reads mapped to a specified region using bedtools
 }
 }
 \details{
-   
+   This function is basically a wrapper for bedtools, which means you still need to have bedtools installed on your computer and saved in your system path. 
 }
 \value{
-%%  ~Describe the value returned
-%%  If it is a LIST, use
-%%  \item{comp1 }{Description of 'comp1'}
-%%  \item{comp2 }{Description of 'comp2'}
-%% ...
+A list of two elements:
+\item{count}{
+	a vector or matrix of values that indicates the number of reads that mapped to user-specified intervals
+}
+\item(gaplength){
+	a integer vector that indicates the gap length of user-specified intervals
+}
 }
 \references{
-%% ~put references to the literature/web site here ~
+https://github.com/Liuy12/MBDDiff
 }
 \author{
-%%  ~~who you are~~
-}
-\note{
-%%  ~~further notes~~
-}
-
-%% ~Make other sections like Warning with \section{Warning }{....} ~
-
-\seealso{
-%% ~~objects to See Also as \code{\link{help}}, ~~~
+Yuanhang Liu
 }
 \examples{
-##---- Should be DIRECTLY executable !! ----
-##-- ==>  Define data, use random,
-##--	or do  help(data=index)  for the standard data sets.
-
-## The function is currently defined as
-function (bamdir, bed) 
-{
-    bamfiles <- grep(".bam", dir(bamdir), value = T)
-    if (length(bamfiles)) 
-        stop("There are no bam files in the directory")
-    else {
-        bamfiles <- paste(bamdir, "/", bamfiles, sep = "")
-        temp1 <- c()
-        for (i in length(bamfiles)) {
-            command <- paste("coverageBed -abam", bamfiles[i], 
-                "-b", bed, sep = " ")
-            cat("processing: ", bamfiles[i], sep = "\t")
-            temp <- fread(input = command, data.table = F)
-            temp <- arrange(temp, V1, V2, V3)
-            temp1 <- bind_cols(temp1, temp$V6)
-        }
-        rownames(temp1) <- temp$V4
-        return(list(count = temp1, gaplength = temp[, (ncol(temp) - 
-            1)]))
-    }
-  }
+\dontrun{
+	# Process several bam files in a fold 
+	Promoter_counts <- bedtoolsr(bamdir = '/path/to/bam/files', bed = '/path/to/bed/file')
+	}
 }
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory.
-\keyword{ ~kwd1 }
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
