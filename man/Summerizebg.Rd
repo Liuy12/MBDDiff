@@ -1,64 +1,39 @@
 \name{Summerizebg}
 \alias{Summerizebg}
-%- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-%%  ~~function to do ... ~~
+	Summerizing background noise for each promoter region
 }
 \description{
-%%  ~~ A concise (1-5 lines) description of what the function does. ~~
-}
+Summerizing background noise for each promoter region based on methylation levels}
 \usage{
 Summerizebg(dataMat_bg, gaplength)
 }
-%- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{dataMat_bg}{
-%%     ~~Describe \code{dataMat_bg} here~~
-}
+  A matrix or data.frame containing background mapped reads for selected bins
+  }
   \item{gaplength}{
-%%     ~~Describe \code{gaplength} here~~
-}
-}
-\details{
-%%  ~~ If necessary, more details than the description above ~~
-}
-\value{
-%%  ~Describe the value returned
-%%  If it is a LIST, use
-%%  \item{comp1 }{Description of 'comp1'}
-%%  \item{comp2 }{Description of 'comp2'}
-%% ...
-}
-\references{
-%% ~put references to the literature/web site here ~
-}
-\author{
-%%  ~~who you are~~
-}
-\note{
-%%  ~~further notes~~
-}
-
-%% ~Make other sections like Warning with \section{Warning }{....} ~
-
-\seealso{
-%% ~~objects to See Also as \code{\link{help}}, ~~~
-}
-\examples{
-##---- Should be DIRECTLY executable !! ----
-##-- ==>  Define data, use random,
-##--	or do  help(data=index)  for the standard data sets.
-
-## The function is currently defined as
-function (dataMat_bg, gaplength) 
-{
-    dataMat_bg$TPM <- CalculateTPM(dataMat_bg, gaplength)
-    dataMat_bg <- dataMat_bg \%>\% group_by(name) \%>\% arrange(TPM) \%>\% 
-        dplyr::slice(1:40) \%>\% summarise_each(funs(sum)) \%>\% 
-        arrange(name) \%>\% select(-1)
+  Gap length of bins
   }
 }
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory.
-\keyword{ ~kwd1 }
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+\details{
+	This function is generally called after \code{bedtoolsr} for counting reads mapped to selected bins for background annotation constructed by \code{IdentifyBackground}
+}
+\value{
+A data.frame of the same dimension as promoter mapped reads
+}
+\references{
+https://github.com/Liuy12/MBDDiff
+}
+\author{
+	Yuanhang Liu
+}
+\seealso{
+	\code{\link{IdentifyBackground}}, \code{\link{Summerizebg}}
+}
+\examples{
+	dontrun{
+		Background_counts <- bedtoolsr(bamdir = '/path/to/bam/files', bed = '/path/to/bg_bed/file')
+		Background_counts_summe <- Summerizebg(Background_counts[[1]], Background_counts[[2]])
+		}
+}

@@ -18,7 +18,9 @@ import(
 "doParallel",
 "rgl",
 "rCharts",
-"plotly"
+"plotly",
+"gplots",
+"princurve"
 )
 
 importFrom('data.table', 'fread')

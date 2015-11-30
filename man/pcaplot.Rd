@@ -5,7 +5,7 @@
     Generate 2d or 3d sample relationship plot based on principal component analysis, multidimensional scaling, etc. 
 }
 \usage{
-pcaplot(x, subset = NULL, cv.Th = 0.1, var.Th = 0, mean.Th = 0, standardize = TRUE, method = c("cluster", "mds", "pca"), dimension = c(1, 2, 3), color = "black", princurve = F, lwd = 1, normals = NULL, col.curve = "red", text, main = NULL, psi = 4, type = "p", interactive = F, ...)
+pcaplot(x, subset = NULL, cv.Th = 0.1, var.Th = 0, mean.Th = 0, standardize = TRUE, method = c("cluster", "mds", "pca"), dimension = c(1, 2, 3), color = "black", princurve = F, lwd = 1, starts = NULL, col.curve = "red", text, main = NULL, psi = 4, type = "p", interactive = F, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -16,82 +16,80 @@ pcaplot(x, subset = NULL, cv.Th = 0.1, var.Th = 0, mean.Th = 0, standardize = TR
   A numeric value indicating the number of genes that is randomly selected for pca analysis. Default to NULL, which means no subsetting procedure will be done
   }
   \item{cv.Th}{
-  A numeric value indicating threshold of coeffcient of variation 
+  If subset = NULL, a numeric value indicating threshold of coeffcient of variation in selecting genes
   }
   \item{var.Th}{
-%%     ~~Describe \code{var.Th} here~~
-}
+  A numeric value indicating threshold of variation in selecting genes. This is only used when subset and cv.Th are both set to NULL
+  }
   \item{mean.Th}{
-%%     ~~Describe \code{mean.Th} here~~
-}
+  Similar to var.Th, a numeric value indicating threshold of mean value in selecting genes. This is only used when subset and cv.Th are both set to NULL
+  }
   \item{standardize}{
-%%     ~~Describe \code{standardize} here~~
-}
+  Whether to standardize samples so that each sample has mean 0 and variance 1. Default to TRUE
+  }
   \item{method}{
-%%     ~~Describe \code{method} here~~
-}
+  One of "cluster", "mds", "pca". Please refer to details section
+  }
   \item{dimension}{
-%%     ~~Describe \code{dimension} here~~
-}
+  Numeric vector indicating the number of dimensions you would like to generate the figure
+  }
   \item{color}{
-%%     ~~Describe \code{color} here~~
-}
+  Color for points when 'mds' or 'pca' is chosen as method
+  }
   \item{princurve}{
-%%     ~~Describe \code{princurve} here~~
-}
+  Logical value indicating whether to generate a principal curve. Please refer to details
+  }
   \item{lwd}{
-%%     ~~Describe \code{lwd} here~~
-}
-  \item{normals}{
-%%     ~~Describe \code{normals} here~~
-}
+  The line width for principal curve 
+  }
+  \item{starts}{
+  Providing the starting point for principal curve. Please refer to details
+  }
   \item{col.curve}{
-%%     ~~Describe \code{col.curve} here~~
-}
+  The color of principal curve
+  }
   \item{text}{
-%%     ~~Describe \code{text} here~~
-}
+  Logical value indicating whether text is added as label to the figure
+  }
   \item{main}{
-%%     ~~Describe \code{main} here~~
-}
+  Main title for the figure
+  }
   \item{psi}{
-%%     ~~Describe \code{psi} here~~
-}
+  Integer value indicating point size
+  }
   \item{type}{
-%%     ~~Describe \code{type} here~~
-}
+  For the default method, a single character indicating the type of item to plot. Supported types are: 'p' for points, 's' for spheres, 'l' for lines, 'h' for line segments from z = 0, and 'n' for nothing.
+  }
   \item{interactive}{
-
+  Logical value indicating whether a interactive version of same figure should be generated
   }
   \item{\dots}{
-%%     ~~Describe \code{\dots} here~~
-}
+  Further arguments will be ignored
+  }
 }
 \details{
-%%  ~~ If necessary, more details than the description above ~~
+    If method = 'cluster', \code{hclust} is used; if method = 'mds', \code{cmdscale} is used; if method = 'pca', \code{prcomp} is used. 
+
+    If princurve is set to TURE, then fits a principal curve which describes a smooth curve that passes through the middle of the data x in an orthogonal sense. This curve is a nonparametric generalization of a linear principal component. For details of principal curve, please refer to \code{\link{principal.curve}}. When princurve is set to TRUE, you need to provide a starting point for principal curve as \code{starts} argument. \code{starts} is basically a logical vector of the same length as number of samples, that tells you which sample will be used as starting point.
 }
 \value{
-%%  ~Describe the value returned
-%%  If it is a LIST, use
-%%  \item{comp1 }{Description of 'comp1'}
-%%  \item{comp2 }{Description of 'comp2'}
-%% ...
+If method = 'cluster': a 'hclust' object
+If method = 'mds' or 'pca', a data.frame containing user specified number of principal components. 
 }
 \references{
-%% ~put references to the literature/web site here ~
+    https://github.com/Liuy12/MBDDiff
 }
 \author{
-%%  ~~who you are~~
+    Yuanhang Liu
 }
-\note{
-%%  ~~further notes~~
-}
-
-%% ~Make other sections like Warning with \section{Warning }{....} ~
-
-\seealso{
-%% ~~objects to See Also as \code{\link{help}}, ~~~
-}
+\seealso{\code{\link{cmdscale}}, \code{\link{hclust}}, \code{\link{prcomp}}, \code{\link{principal.curve}}}
 \examples{
-    
+    \dontrun{
+        data(PromoterCount)
+        Condition <- c(rep('C1', 3), rep('C2', 3))
+        TestStat <- MBDDiff(PromoterCount, BackgroundCount, Condition)
+        MBD <- TestStat[[1]]
+        Norm_count <- counts(MBD, normalized = TRUE)
+        pcaplot(Norm_count, cv.Th = 0.1, method = 'pca', dimension = c(1,2,3), princurve = TRUE, starts = c(1,1,1,0,0,0)) 
+        }
 }

@@ -110,7 +110,7 @@ For each promoter region, choose 40 out of
 80 100 bp windows that are relatively low in TPM (Transcript Per Million)
 
 ```{r,message = FALSE, warning=FALSE, eval=FALSE}
-Background_counts_summe <- Summerizebg(Background_counts, gaplength)
+Background_counts_summe <- Summerizebg(Background_counts[[1]], Background_counts[[2]])
 ```
 
 #### Test for differential methylation 
@@ -154,7 +154,7 @@ Firstly extract normalized reads and then generate 2d/3d pca plot:
 
 ```{r,message = FALSE, warning=FALSE, eval=FALSE}
 Norm_count <- counts(MBD, normalized = TRUE)
-pcaplot(Norm_count, cv.Th = 0.1, method = 'pca', dimension = c(1,2,3), )
+pcaplot(Norm_count, cv.Th = 0.1, method = 'pca', dimension = c(1,2,3) )
 ```
 
 #### MAplot of promoters

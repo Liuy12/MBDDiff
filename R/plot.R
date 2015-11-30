@@ -43,7 +43,7 @@ MethyEnrich <- function(bin_count, fa, interactive = F){
 
 ## 3d pca plot 
 pcaplot<-function (x, subset = NULL, cv.Th = 0.1, var.Th = 0, mean.Th =0, standardize = TRUE,
-                   method = c("cluster", "mds","pca"), dimension = c(1,2,3), color = 'black', princurve=F,lwd=1,normals=NULL,col.curve='red', 
+                   method = c("cluster", "mds","pca"), dimension = c(1,2,3), color = 'black', princurve=F,lwd=1,starts=NULL,col.curve='red', 
                    text = T, main = NULL, psi = 4, type = 'p',interactive = F, ...)
 {
   
@@ -79,7 +79,7 @@ pcaplot<-function (x, subset = NULL, cv.Th = 0.1, var.Th = 0, mean.Th =0, standa
     if (length(subset) == 1 && is.numeric(subset)) {
       subset <- sample(1:nrow(dataMatrix), min(subset,
                                                nrow(dataMatrix)))
-    }
+    }6.3877
     if (is.null(main))
       main <- paste("Sample relations based on", length(subset),
                     "selected genes")
@@ -120,7 +120,7 @@ pcaplot<-function (x, subset = NULL, cv.Th = 0.1, var.Th = 0, mean.Th =0, standa
                                                                        dimension[3], " (", percent[dimension[3]], "%)",
                                                                        sep = ""), main = main,size=psi,col=color, type = type)
     if(princurve){
-      start<-aggregate(ppoints[,1:3],by=list(rank(!normals)),FUN=mean)
+      start<-aggregate(ppoints[,1:3],by=list(rank(!starts)),FUN=mean)
       start <- as.matrix(start[, -1])
       fit<-principal.curve(ppoints[,1:3],start=start,plot.true=F)
       plot3d(fit$s[fit$tag,],type='l',add=T,col=col.curve,lwd=lwd)
@@ -164,7 +164,7 @@ pcaplot<-function (x, subset = NULL, cv.Th = 0.1, var.Th = 0, mean.Th =0, standa
                                                                        dimension[3], " (", percent[dimension[3]], "%)",
                                                                        sep = ""), main = main,size=psi,col=color, type = type, pch =19)
     if(princurve){
-      start<-aggregate(ppoints[,1:3],by=list(rank(!normals)),FUN=mean)
+      start<-aggregate(ppoints[,1:3],by=list(rank(!starts)),FUN=mean)
       start <- as.matrix(start[, -1])
       fit<-principal.curve(ppoints[,1:3],start=start,plot.true=F)
       plot3d(fit$s[fit$tag,],type='l',add=T,col=col.curve,lwd=lwd)
