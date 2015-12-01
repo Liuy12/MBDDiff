@@ -79,7 +79,7 @@ pcaplot<-function (x, subset = NULL, cv.Th = 0.1, var.Th = 0, mean.Th =0, standa
     if (length(subset) == 1 && is.numeric(subset)) {
       subset <- sample(1:nrow(dataMatrix), min(subset,
                                                nrow(dataMatrix)))
-    }6.3877
+    }
     if (is.null(main))
       main <- paste("Sample relations based on", length(subset),
                     "selected genes")

@@ -4,7 +4,7 @@
   Identify annotation for background noise
 }
 \description{
-%%  ~~ A concise (1-5 lines) description of what the function does. ~~
+  Identify background regions based on 
 }
 \usage{
 IdentifyBackground(organism, bed_path, binsize, promo_bed, cores)
@@ -42,10 +42,10 @@ A data.frame that contains the following elements:
 \item{chromStart}{
   Chromsome Start coordinate
 }
-\item(chromEnd){
+\item{chromEnd}{
   Chromsome End coordinate
 }
-\item(GC){
+\item{GC}{
   GC content
 }
 \item{proximity}{

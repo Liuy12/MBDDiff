@@ -29,7 +29,7 @@ A list of two elements:
 \item{count}{
 	a vector or matrix of values that indicates the number of reads that mapped to user-specified intervals
 }
-\item(gaplength){
+\item{gaplength}{
 	a integer vector that indicates the gap length of user-specified intervals
 }
 }
