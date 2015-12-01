@@ -39,6 +39,7 @@ Currently, MBDDiff can be installed from Github by:
 install.packages('devtools')
 library(devtools)
 install_github('Liuy12/MBDDiff')
+install_github('Liuy12/XBSeq')
 ```
 ```{r,message = FALSE, warning=FALSE, eval=FALSE}
 library("MBDDiff")
@@ -172,9 +173,13 @@ DE_index <- with(TestStat[[2]], which(baseMean > quantile(baseMean)[2] &
 heatmap.3(Norm_count[DE_index,])
 ```
 
-#### Dynamic visualization report
+#### Dynamic visualization
 
+For all figures generated above, there is one more option that the user can specify to generate one equivalent dynamic figure. For instance to generate the equivalent dynamic figure of methylation enrichment, you can do:
 
+```{r,message = FALSE, warning=FALSE, eval=FALSE}
+MethyEnrich(whole_genome_bin_count_TPM, fa, interactive = TRUE)
+```
 
 ## Bug reports
 Report bugs as issues on our [GitHub repository](https://github.com/Liuy12/MBDDiff/issues) or you can report directly to my email: liuy12@uthscsa.edu.
