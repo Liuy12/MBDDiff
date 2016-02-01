@@ -17,8 +17,6 @@ import(
 "RMySQL",
 "doParallel",
 "rgl",
-"rCharts",
-"plotly",
 "gplots",
 "princurve"
 )

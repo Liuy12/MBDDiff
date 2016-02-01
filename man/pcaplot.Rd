@@ -5,7 +5,7 @@
     Generate 2d or 3d sample relationship plot based on principal component analysis, multidimensional scaling, etc. 
 }
 \usage{
-pcaplot(x, subset = NULL, cv.Th = 0.1, var.Th = 0, mean.Th = 0, standardize = TRUE, method = c("cluster", "mds", "pca"), dimension = c(1, 2, 3), color = "black", princurve = F, lwd = 1, starts = NULL, col.curve = "red", text, main = NULL, psi = 4, type = "p", interactive = F, ...)
+pcaplot(x, subset = NULL, cv.Th = 0.1, var.Th = 0, mean.Th = 0, standardize = TRUE, method = c("cluster", "mds", "pca"), dimension = c(1, 2, 3), color = "black", princurve = F, lwd = 1, starts = NULL, col.curve = "red", text, main = NULL, psi = 4, type = "p", ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -59,9 +59,6 @@ pcaplot(x, subset = NULL, cv.Th = 0.1, var.Th = 0, mean.Th = 0, standardize = TR
   }
   \item{type}{
   For the default method, a single character indicating the type of item to plot. Supported types are: 'p' for points, 's' for spheres, 'l' for lines, 'h' for line segments from z = 0, and 'n' for nothing.
-  }
-  \item{interactive}{
-  Logical value indicating whether a interactive version of same figure should be generated
   }
   \item{\dots}{
   Further arguments will be ignored

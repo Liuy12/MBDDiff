@@ -5,7 +5,7 @@
     More customized heatmap that is designed based on heatmap.2 that gives user control over color key
 }
 \usage{
-heatmap.3(Exprs, sel = F, thres_mean, thres_var, numbreaks = 100, col = c("blue", "white", "red"), breakratio = c(2, 1, 2), colsidebar, Colv = F, Rowv = T, scale = "row", labRow = F, labCol = F, dendrogram = "row", interactive =F)
+heatmap.3(Exprs, sel = F, thres_mean, thres_var, numbreaks = 100, col = c("blue", "white", "red"), breakratio = c(2, 1, 2), colsidebar, Colv = F, Rowv = T, scale = "row", labRow = F, labCol = F, dendrogram = "row")
 }
 \arguments{
   \item{Exprs}{
@@ -50,15 +50,12 @@ heatmap.3(Exprs, sel = F, thres_mean, thres_var, numbreaks = 100, col = c("blue"
   \item{dendrogram}{
   One of values in "both", "row", "column", "none". Indicating how you wanna the dendrogram to be drawn
   }
-  \item{interactive}{
-  Logical value indicating whether you wanna to generate a dynamic heatmap which is generated with plotly package
-  }
 }
 \details{
    heatmap.3 internally calls heatmap.2 from gplots package, which uses layout to arragent the plot elements. Consequentially, it can not be used in a multi column/row layout using layout(...), par(mfrow=...) or (mfcol=...).
 }
 \references{
-    https://github.com/Liuy12/Kaggle
+    https://github.com/Liuy12/MBDDiff
 }
 \author{
     Yuanhang Liu

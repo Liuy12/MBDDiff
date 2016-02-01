@@ -6,7 +6,7 @@
 \description{
   Generate graph of enrichment of GC content grouped by methylation levels}
 \usage{
-MethyEnrich(bed_count, fa, interactive = F)
+MethyEnrich(bed_count, fa)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -15,9 +15,6 @@ MethyEnrich(bed_count, fa, interactive = F)
   }
   \item{fa}{
   Absolute path of sequence file annotation for your interested organism
-  }
-  \item{interactive}{
-  Logical variable indicating whether you want to generate a interactive version of the same graph
   }
 }
 \details{
