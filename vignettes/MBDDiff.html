@@ -10,7 +10,7 @@
 
 <meta name="author" content="Yuanhang Liu" />
 
-<meta name="date" content="2015-12-01" />
+<meta name="date" content="2016-03-15" />
 
 <title>Differential methylation analysis of MBDcap-seq dataset using MBDDiff package</title>
 
@@ -51,17 +51,33 @@ document.addEventListener("DOMContentLoaded", function() {
 <div id="header">
 <h1 class="title">Differential methylation analysis of MBDcap-seq dataset using MBDDiff package</h1>
 <h4 class="author"><em>Yuanhang Liu</em></h4>
-<h4 class="date"><em>2015-12-01</em></h4>
+<h4 class="date"><em>2016-03-15</em></h4>
 </div>
 
 <h1>Contents</h1>
 <div id="TOC">
 <ul>
-<li><a href="#introduction"><span class="toc-section-number">0.1</span> Introduction</a></li>
-<li><a href="#installation"><span class="toc-section-number">0.2</span> Installation</a></li>
-<li><a href="#processing-mbdcap-seq-datasets-using-mbddiff"><span class="toc-section-number">0.3</span> Processing MBDcap-seq datasets using MBDdiff</a></li>
-<li><a href="#visualization-functionalities-of-mbddiff"><span class="toc-section-number">0.4</span> Visualization functionalities of MBDDiff</a></li>
-<li><a href="#bug-reports"><span class="toc-section-number">0.5</span> Bug reports</a></li>
+<li><a href="#introduction"><span class="toc-section-number">1</span> Introduction</a></li>
+<li><a href="#installation"><span class="toc-section-number">2</span> Installation</a></li>
+<li><a href="#processing-mbdcap-seq-datasets-using-mbddiff"><span class="toc-section-number">3</span> Processing MBDcap-seq datasets using MBDdiff</a><ul>
+<li><a href="#retriving-annotation-files-for-promoter-regions"><span class="toc-section-number">3.1</span> Retriving annotation files for promoter regions</a></li>
+<li><a href="#counting-reads-mapped-to-promoter-regions"><span class="toc-section-number">3.2</span> Counting reads mapped to promoter regions</a></li>
+<li><a href="#identify-background-regions-for-mbdcap-seq"><span class="toc-section-number">3.3</span> Identify background regions for MBDcap-seq</a><ul>
+<li><a href="#filtering-step"><span class="toc-section-number">3.3.1</span> Filtering step</a></li>
+<li><a href="#construct-preliminary-background-regions-based-on-gc-content"><span class="toc-section-number">3.3.2</span> Construct preliminary background regions based on GC content</a></li>
+</ul></li>
+<li><a href="#counting-reads-mapped-to-background-regions"><span class="toc-section-number">3.4</span> Counting reads mapped to background regions</a></li>
+<li><a href="#summerize-background-mapped-reads-to-each-promoter"><span class="toc-section-number">3.5</span> Summerize background mapped reads to each promoter</a></li>
+<li><a href="#test-for-differential-methylation"><span class="toc-section-number">3.6</span> Test for differential methylation</a></li>
+</ul></li>
+<li><a href="#visualization-functionalities-of-mbddiff"><span class="toc-section-number">4</span> Visualization functionalities of MBDDiff</a><ul>
+<li><a href="#enrichment-of-gc-content-grouped-by-methylation-levels"><span class="toc-section-number">4.1</span> Enrichment of GC content grouped by methylation levels</a></li>
+<li><a href="#distribution-of-promoter-counts-and-background-noise"><span class="toc-section-number">4.2</span> Distribution of promoter counts and background noise</a></li>
+<li><a href="#d-principal-component-analysis"><span class="toc-section-number">4.3</span> 3d principal component analysis</a></li>
+<li><a href="#maplot-of-promoters"><span class="toc-section-number">4.4</span> MAplot of promoters</a></li>
+<li><a href="#heatmap-of-selected-promoters"><span class="toc-section-number">4.5</span> Heatmap of selected promoters</a></li>
+</ul></li>
+<li><a href="#bug-reports"><span class="toc-section-number">5</span> Bug reports</a></li>
 </ul>
 </div>
 
@@ -78,12 +94,12 @@ document.addEventListener("DOMContentLoaded", function() {
       links[i].target = '_blank';
 });
 </script>
-<div id="introduction" class="section level2">
-<h2><span class="header-section-number">0.1</span> Introduction</h2>
+<div id="introduction" class="section level1">
+<h1><span class="header-section-number">1</span> Introduction</h1>
 <p>Methyl-CpG binding domain-based capture followed by high throughput sequencing (MBDCap-seq) is widely used to examine DNA methylation pattern genome-wide. Current MBDCap-seq data analysis approaches focus on measurement of methylated CpG sequence reads, without considering genomic characteristics and tissue-specific context and their impact to the amount of methylated DNA measurement (signal) and background fluctuation (noise). Therefore, specific software needs to be developed to process MBDCap-seq datasets. Here we presented a novel algorithm, termed MBDDiff, implemented as an R package that is designed specifically for processing MBDCap-seq datasets. MBDDiff contains three modules: quality assessment of datasets and quantification of DNA methylation; determination of differential methylation of promoter regions; and visualization functionalities.</p>
 </div>
-<div id="installation" class="section level2">
-<h2><span class="header-section-number">0.2</span> Installation</h2>
+<div id="installation" class="section level1">
+<h1><span class="header-section-number">2</span> Installation</h1>
 <p>Currently, MBDDiff can be installed from Github by:</p>
 <pre class="r"><code>install.packages('devtools')
 library(devtools)
@@ -92,96 +108,93 @@ install_github('Liuy12/XBSeq')</code></pre>
 <pre class="r"><code>library(&quot;MBDDiff&quot;)</code></pre>
 <p>We will submit the package to Bioconductor at earliest time possible.</p>
 </div>
-<div id="processing-mbdcap-seq-datasets-using-mbddiff" class="section level2">
-<h2><span class="header-section-number">0.3</span> Processing MBDcap-seq datasets using MBDdiff</h2>
-<div id="retriving-annotation-files-for-promoter-regions" class="section level4">
-<h4><span class="header-section-number">0.3.0.1</span> Retriving annotation files for promoter regions</h4>
+<div id="processing-mbdcap-seq-datasets-using-mbddiff" class="section level1">
+<h1><span class="header-section-number">3</span> Processing MBDcap-seq datasets using MBDdiff</h1>
+<div id="retriving-annotation-files-for-promoter-regions" class="section level2">
+<h2><span class="header-section-number">3.1</span> Retriving annotation files for promoter regions</h2>
 <p>Genomic annotation files can be downloaded from UCSC database and processed within MBDdiff to locate promoter regions. Isoforms with same promoter regions will only be counted once. For instance, to get promoter annotation with human genome build ‘hg19’, we will do,</p>
 <pre class="r"><code>Promoter_anno &lt;- GetPromoterAnno('hg19')</code></pre>
 <p>We have already generated promoter annotation file for several organisms including, human ‘hg19’ and ‘hg38’ build, mouse ‘mm10’ and ‘mm9’ build, rat ‘rn6’ and ‘rn5’ build. These files can be downloaded from Github: MBDDiff_files</p>
 </div>
-<div id="counting-reads-mapped-to-promoter-regions" class="section level4">
-<h4><span class="header-section-number">0.3.0.2</span> Counting reads mapped to promoter regions</h4>
+<div id="counting-reads-mapped-to-promoter-regions" class="section level2">
+<h2><span class="header-section-number">3.2</span> Counting reads mapped to promoter regions</h2>
 <p>Reads mapped to each promoter regions can be counted by using bedtools coveragebed function. We implemented a wrapper function in MBDDiff which basically calls bedtools internally. You will need to provide the path to ‘.bam’ and ‘.bed’ files:</p>
 <pre class="r"><code>Promoter_counts &lt;- bedtoolsr(bamdir = '/path/to/bam/files', bed = '/path/to/bed/file')</code></pre>
 <p>The output is a list contains two elements, a matrix containing promoter mapped reads for each sample and a vector containing region length information.</p>
 </div>
-<div id="identify-background-regions-for-mbdcap-seq" class="section level4">
-<h4><span class="header-section-number">0.3.0.3</span> Identify background regions for MBDcap-seq</h4>
+<div id="identify-background-regions-for-mbdcap-seq" class="section level2">
+<h2><span class="header-section-number">3.3</span> Identify background regions for MBDcap-seq</h2>
 <p>We have already carried out following steps to identify background regions for several organisms including, human ‘hg19’ and ‘hg38’ build, mouse ‘mm10’ and ‘mm9’ build, rat ‘rn6’ and ‘rn5’ build. These files can be downloaded from Github: MBDDiff_files.</p>
 <p>If you need to or want to learn how to construct background regions for your organism of interest, please carry out following steps.</p>
 <p>To identify regions that potentially contribute to background noise, we built a 100 bp tiling window across the whole genome. In order to identify the regions for measuring background noise, we applied following procedures:</p>
-<ol style="list-style-type: decimal">
-<li>Filtering step: In all the 100 bp windows, exclude any window that resides in promoter regions, predicted CpG islands regions and windows that contains ambiguous bases (gaps)</li>
-</ol>
+<div id="filtering-step" class="section level3">
+<h3><span class="header-section-number">3.3.1</span> Filtering step</h3>
+<p>In all the 100 bp windows, exclude any window that resides in promoter regions, predicted CpG islands regions and windows that contains ambiguous bases (gaps)</p>
 <p>Firstly, construct potentially functional regions to exclude from 100bp windows</p>
 <p>Then, extract sequence files for the newly constructed 100bp windows. The output fasta file will be used to calcualte GC content statistics in whole genome sliding windows:</p>
 <p>Finally, filter 100 bp windows by excluding those that intersect with functional elements</p>
-<ol start="2" style="list-style-type: decimal">
-<li>Construct preliminary background regions based on GC content: for each promoter region, identify 80 100bp windows nearby that has low in GC content (&lt; 40%) and also relatively proximal to the corresponding TSS:</li>
-</ol>
+</div>
+<div id="construct-preliminary-background-regions-based-on-gc-content" class="section level3">
+<h3><span class="header-section-number">3.3.2</span> Construct preliminary background regions based on GC content</h3>
+<p>For each promoter region, identify 80 100bp windows nearby that has low in GC content (&lt; 40%) and also relatively proximal to the corresponding TSS:</p>
 <p>All the above procedures can be done via one function:</p>
 <pre class="r"><code>bed_100bp_bg &lt;- IdentifyBackground(organism = 'hg19', bed_path = 'path/to/bed', binsize = 100, promo_bed = Promoter_anno, cores = 4)</code></pre>
 <p>Details regarding each this function can be found in the manual page.</p>
 </div>
-<div id="counting-reads-mapped-to-background-regions" class="section level4">
-<h4><span class="header-section-number">0.3.0.4</span> Counting reads mapped to background regions</h4>
+</div>
+<div id="counting-reads-mapped-to-background-regions" class="section level2">
+<h2><span class="header-section-number">3.4</span> Counting reads mapped to background regions</h2>
 <p>We will follow a similar procedure as we did for promoter regions:</p>
 <pre class="r"><code>Background_counts &lt;- bedtoolsr(bamdir = '/path/to/bam/files', bed = '/path/to/bg_bed/file')</code></pre>
 </div>
-<div id="summerize-background-mapped-reads-to-each-promoter" class="section level4">
-<h4><span class="header-section-number">0.3.0.5</span> Summerize background mapped reads to each promoter</h4>
+<div id="summerize-background-mapped-reads-to-each-promoter" class="section level2">
+<h2><span class="header-section-number">3.5</span> Summerize background mapped reads to each promoter</h2>
 <p>For each promoter region, choose 40 out of 80 100 bp windows that are relatively low in TPM (Transcript Per Million)</p>
 <pre class="r"><code>Background_counts_summe &lt;- Summerizebg(Background_counts[[1]], Background_counts[[2]])</code></pre>
 </div>
-<div id="test-for-differential-methylation" class="section level4">
-<h4><span class="header-section-number">0.3.0.6</span> Test for differential methylation</h4>
+<div id="test-for-differential-methylation" class="section level2">
+<h2><span class="header-section-number">3.6</span> Test for differential methylation</h2>
 <pre class="r"><code>Condition &lt;- c(rep('C1', 3), rep('C2', 3))
 TestStat &lt;- MBDDiff(Promoter_counts, Background_counts_summe, Condition)</code></pre>
 </div>
 </div>
-<div id="visualization-functionalities-of-mbddiff" class="section level2">
-<h2><span class="header-section-number">0.4</span> Visualization functionalities of MBDDiff</h2>
+<div id="visualization-functionalities-of-mbddiff" class="section level1">
+<h1><span class="header-section-number">4</span> Visualization functionalities of MBDDiff</h1>
 <p>We provide several visualization functionalities to help you visulize sample relationships based on methylation profile; distribution of promoter vesus background mapped reads, etc.</p>
-<div id="enrichment-of-gc-content-grouped-by-methylation-levels" class="section level4">
-<h4><span class="header-section-number">0.4.0.1</span> Enrichment of GC content grouped by methylation levels</h4>
+<div id="enrichment-of-gc-content-grouped-by-methylation-levels" class="section level2">
+<h2><span class="header-section-number">4.1</span> Enrichment of GC content grouped by methylation levels</h2>
 <p>Do this if you haven’t already done so:</p>
 <pre class="r"><code>whole_genome_bin_count &lt;- bedtoolsr(bed, bam)
 whole_genome_bin_count_TPM &lt;- CalculateTPM(whole_genome_bin_count[[1]], whole_genome_bin_count[[2]])</code></pre>
 <p>Then, we can generate enrichment of GC content grouped by methylation levels:</p>
 <pre class="r"><code>MethyEnrich(whole_genome_bin_count_TPM, fa)</code></pre>
 </div>
-<div id="distribution-of-promoter-counts-and-background-noise" class="section level4">
-<h4><span class="header-section-number">0.4.0.2</span> Distribution of promoter counts and background noise</h4>
+<div id="distribution-of-promoter-counts-and-background-noise" class="section level2">
+<h2><span class="header-section-number">4.2</span> Distribution of promoter counts and background noise</h2>
 <p>Extract XBSeqDataSet object from MBDDiff function and then plot the distribution using XBplot:</p>
 <pre class="r"><code>MBD &lt;- TestStat[[1]]
 XBplot(MBD, Samplenum = 1, unit = 'LogTPM', Genelength = Promoter_counts[[2]])</code></pre>
 </div>
-<div id="d-principal-component-analysis" class="section level4">
-<h4><span class="header-section-number">0.4.0.3</span> 3d principal component analysis</h4>
+<div id="d-principal-component-analysis" class="section level2">
+<h2><span class="header-section-number">4.3</span> 3d principal component analysis</h2>
 <p>Firstly extract normalized reads and then generate 2d/3d pca plot:</p>
 <pre class="r"><code>Norm_count &lt;- counts(MBD, normalized = TRUE)
 pcaplot(Norm_count, cv.Th = 0.1, method = 'pca', dimension = c(1,2,3) )</code></pre>
 </div>
-<div id="maplot-of-promoters" class="section level4">
-<h4><span class="header-section-number">0.4.0.4</span> MAplot of promoters</h4>
+<div id="maplot-of-promoters" class="section level2">
+<h2><span class="header-section-number">4.4</span> MAplot of promoters</h2>
 <pre class="r"><code>MAplot(TestStat[[2]])</code></pre>
 </div>
-<div id="heatmap-of-selected-promoters" class="section level4">
-<h4><span class="header-section-number">0.4.0.5</span> Heatmap of selected promoters</h4>
+<div id="heatmap-of-selected-promoters" class="section level2">
+<h2><span class="header-section-number">4.5</span> Heatmap of selected promoters</h2>
 <pre class="r"><code>DE_index &lt;- with(TestStat[[2]], which(baseMean &gt; quantile(baseMean)[2] &amp; 
                   abs(log2FoldChange) &gt; 1 &amp;
                   padj &lt; 0.1))
 heatmap.3(Norm_count[DE_index,])</code></pre>
 </div>
-<div id="dynamic-visualization" class="section level4">
-<h4><span class="header-section-number">0.4.0.6</span> Dynamic visualization</h4>
-<p>For all figures generated above, there is one more option that the user can specify to generate one equivalent dynamic figure. For instance to generate the equivalent dynamic figure of methylation enrichment, you can do:</p>
-<pre class="r"><code>MethyEnrich(whole_genome_bin_count_TPM, fa, interactive = TRUE)</code></pre>
 </div>
-</div>
-<div id="bug-reports" class="section level2">
-<h2><span class="header-section-number">0.5</span> Bug reports</h2>
+<div id="bug-reports" class="section level1">
+<h1><span class="header-section-number">5</span> Bug reports</h1>
 <p>Report bugs as issues on our <a href="https://github.com/Liuy12/MBDDiff/issues">GitHub repository</a> or you can report directly to my email: <a href="mailto:liuy12@uthscsa.edu">liuy12@uthscsa.edu</a>.</p>
 </div>
 

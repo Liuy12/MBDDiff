@@ -7,7 +7,7 @@ Retrive promoter annotation from UCSC database
 Retrive promoter annotation of user-specified organism from UCSC database
 }
 \usage{
-GetPromoterAnno(organism, save = F, Dir = NULL)
+GetPromoterAnno(organism, save = FALSE, Dir = NULL)
 }
 \arguments{
   \item{organism}{
@@ -38,5 +38,7 @@ A data.frame containing promoter annotation information
   Yuanhang Liu
 }
 \examples{
-  Promoter_anno <- GetPromoterAnno('hg19')
+\dontrun{
+    Promoter_anno <- GetPromoterAnno('hg19')
+    }
 }

@@ -5,7 +5,7 @@
     More customized heatmap that is designed based on heatmap.2 that gives user control over color key
 }
 \usage{
-heatmap.3(Exprs, sel = F, thres_mean, thres_var, numbreaks = 100, col = c("blue", "white", "red"), breakratio = c(2, 1, 2), colsidebar, Colv = F, Rowv = T, scale = "row", labRow = F, labCol = F, dendrogram = "row")
+heatmap.3(Exprs, sel = FALSE, thres_mean, thres_var, numbreaks = 100, col = c("blue", "white", "red"), breakratio = c(2, 1, 2), colsidebar, Colv = FALSE, Rowv = TRUE, scale = "row", labRow = FALSE, labCol = FALSE, dendrogram = "row")
 }
 \arguments{
   \item{Exprs}{
@@ -61,9 +61,9 @@ heatmap.3(Exprs, sel = F, thres_mean, thres_var, numbreaks = 100, col = c("blue"
     Yuanhang Liu
 }
 \seealso{
-    \link{\code{heatmap.2}}
+    \code{\link{heatmap.2}}
 }
 \examples{
     data(PromoterCount)
-    heatmap.3(PromoterCount[1:100,])
+    heatmap.3(as.matrix(Promoter[1:100,]))
 }

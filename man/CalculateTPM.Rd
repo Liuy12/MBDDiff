@@ -30,5 +30,5 @@ CalculateTPM(dataMat, gaplength)
 }
 \examples{
 data(PromoterCount)
-PromoterCount_TPM <- CalculateTPM(PromoterCount, Promoterlength)
+PromoterCount_TPM <- CalculateTPM(Promoter, Promoterlength)
 }

@@ -1,6 +1,6 @@
 ## whole genome GC distribution by quantile of methylation levels. 
 MethyEnrich <- function(bin_count, fa){
-  GCcon <- CountFreqency(fa, CG =T, ATCG = F)$CG
+  GCcon <- CountFreqency(fa, CG =TRUE, ATCG = FALSE)$CG
   temp <- quantile(bin_count)
   labels <- switch(length(unique(temp)),
                    a = c('0-100%'),
@@ -19,8 +19,8 @@ MethyEnrich <- function(bin_count, fa){
 
 ## 3d pca plot 
 pcaplot<-function (x, subset = NULL, cv.Th = 0.1, var.Th = 0, mean.Th =0, standardize = TRUE,
-                   method = c("cluster", "mds","pca"), dimension = c(1,2,3), color = 'black', princurve=F,lwd=1,starts=NULL,col.curve='red', 
-                   text = T, main = NULL, psi = 4, type = 'p', ...)
+                   method = c("cluster", "mds","pca"), dimension = c(1,2,3), color = 'black', princurve=FALSE,lwd=1,starts=NULL,col.curve='red', 
+                   text = TRUE, main = NULL, psi = 4, type = 'p', ...)
 {
   
   if (is.matrix(x)) {
@@ -98,8 +98,8 @@ pcaplot<-function (x, subset = NULL, cv.Th = 0.1, var.Th = 0, mean.Th =0, standa
     if(princurve){
       start<-aggregate(ppoints[,1:3],by=list(rank(!starts)),FUN=mean)
       start <- as.matrix(start[, -1])
-      fit<-principal.curve(ppoints[,1:3],start=start,plot.true=F)
-      plot3d(fit$s[fit$tag,],type='l',add=T,col=col.curve,lwd=lwd)
+      fit<-principal.curve(ppoints[,1:3],start=start,plot.true=FALSE)
+      plot3d(fit$s[fit$tag,],type='l',add=TRUE,col=col.curve,lwd=lwd)
     }
     if(text)
       text3d(ppoints[, dimension[1]], ppoints[, dimension[2]], ppoints[, dimension[3]],
@@ -134,8 +134,8 @@ pcaplot<-function (x, subset = NULL, cv.Th = 0.1, var.Th = 0, mean.Th =0, standa
     if(princurve){
       start<-aggregate(ppoints[,1:3],by=list(rank(!starts)),FUN=mean)
       start <- as.matrix(start[, -1])
-      fit<-principal.curve(ppoints[,1:3],start=start,plot.true=F)
-      plot3d(fit$s[fit$tag,],type='l',add=T,col=col.curve,lwd=lwd)
+      fit<-principal.curve(ppoints[,1:3],start=start,plot.true=FALSE)
+      plot3d(fit$s[fit$tag,],type='l',add=TRUE,col=col.curve,lwd=lwd)
     }
     if(text){
       text3d(ppoints[, dimension[1]], ppoints[, dimension[2]], ppoints[, dimension[3]],
@@ -151,10 +151,9 @@ pcaplot<-function (x, subset = NULL, cv.Th = 0.1, var.Th = 0, mean.Th =0, standa
 
 
 ## heatmap of promoter methylation intensity
-heatmap.3 <- function(Exprs, sel=F, thres_mean, thres_var, numbreaks=100, col = c("blue","white","red"), 
-                       breakratio = c(2,1,2), colsidebar, Colv=F, Rowv=T, scale= 'row', labRow=F, 
-                       labCol=F, dendrogram = 'row'){
-  suppressPackageStartupMessages(invisible(require('gplots', quietly=TRUE)))
+heatmap.3 <- function(Exprs, sel=FALSE, thres_mean, thres_var, numbreaks=100, col = c("blue","white","red"), 
+                       breakratio = c(2,1,2), colsidebar, Colv=FALSE, Rowv=TRUE, scale= 'row', labRow=FALSE, 
+                       labCol=FALSE, dendrogram = 'row'){
   if(labRow)
     labRow <- rownames(Exprs)
   if(labCol)
@@ -204,7 +203,7 @@ heatmap.3 <- function(Exprs, sel=F, thres_mean, thres_var, numbreaks=100, col = 
     }
     
   }
-  rg <- quantile(Exprs_scale,na.rm=T)
+  rg <- quantile(Exprs_scale,na.rm=TRUE)
   rg_diff <- rg[4]-rg[2]
   rg_max <- max(abs(rg))
   Exprs_sd <- sd(Exprs_scale)
@@ -217,7 +216,7 @@ heatmap.3 <- function(Exprs, sel=F, thres_mean, thres_var, numbreaks=100, col = 
     hmcols<- colorRampPalette(col)(length(bk)-1)
   }
   else{
-    rg <- range(Exprs_scale, na.rm=T)
+    rg <- range(Exprs_scale, na.rm=TRUE)
     bp <- c((breakratio[1]/sum(breakratio))*diff(rg) - rg_max, rg_max - (breakratio[3]/sum(breakratio))*diff(rg))
     bk <- c(seq(-rg_max,bp[1],length=numbreaks), seq(bp[1],bp[2],length=numbreaks),seq(bp[2],rg_max,length=numbreaks))
     hmcols<- colorRampPalette(col)(length(bk)-1)

@@ -83,6 +83,6 @@ Yuanhang Liu
   \dontrun{
     data(PromoterCount)
     conditions <- c(rep('C1', 3), rep('C2', 3))
-    MBDDiff(PromoterCount, Background_count, conditions)
+    MBDDiff(Promoter, Background, conditions)
     }
 }

@@ -32,7 +32,7 @@ https://github.com/Liuy12/MBDDiff
 	\code{\link{IdentifyBackground}}, \code{\link{Summerizebg}}
 }
 \examples{
-	dontrun{
+	\dontrun{
 		Background_counts <- bedtoolsr(bamdir = '/path/to/bam/files', bed = '/path/to/bg_bed/file')
 		Background_counts_summe <- Summerizebg(Background_counts[[1]], Background_counts[[2]])
 		}

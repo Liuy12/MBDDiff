@@ -13,12 +13,14 @@ heatmap.3
 )
 
 import(
+"XBSeq",
 "dplyr",
 "RMySQL",
 "doParallel",
 "rgl",
 "gplots",
-"princurve"
+"princurve",
+"methods"
 )
 
 importFrom('data.table', 'fread')

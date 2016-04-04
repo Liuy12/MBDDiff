@@ -1,22 +1,11 @@
-# library(dplyr)
-# library(RMySQL)
-# library(pryr)
-# library(doParallel)
-# library(data.table)
-# library(pracma)
-# library(rgl)
-# library(rCharts)
-# library(plotly)
-# library(slidify)
-# library(slidifyLibraries)
-
 ## show a list of available organisms from UCSC database
 ShowAvailableOrg <- function(){
-  return(data(Organisms))
+  data(Organisms)
 }
 
-GetPromoterAnno <- function(organism, save = T, Dir = NULL){
-  if(!organism %in% ShowAvailableOrg()[,2])
+GetPromoterAnno <- function(organism, save = FALSE, Dir = NULL){
+  ShowAvailableOrg()
+  if(!organism %in% Organisms[,2])
     stop('Organism not found. Please call funcition ShowAvailabelOrg() to retrive a list of available organisms from UCSC. Remember to use accession code rather than the organism name directly.')
   ucsc_db <- src_mysql(organism, 'genome-mysql.cse.ucsc.edu', user = 'genome')
   Ref_Flat <- tbl(ucsc_db, sql("SELECT geneName, chrom, strand, txStart, txEnd FROM refFlat"))
@@ -37,7 +26,7 @@ bedtoolsr <- function(bam = NULL, bamdir = NULL, bed){
       bamfiles <- bam
   }
   else
-    bamfiles <- grep('.bam', dir(bamdir), value = T)
+    bamfiles <- grep('.bam', dir(bamdir), value = TRUE)
   if(length(bamfiles))
     stop('There are no bam files in the directory')
   else{
@@ -46,7 +35,7 @@ bedtoolsr <- function(bam = NULL, bamdir = NULL, bed){
     for(i in length(bamfiles)){
       command <- paste('coverageBed -abam', bamfiles[i], '-b', bed, sep = ' ')
       cat('processing: ', bamfiles[i], sep = '\t')
-      temp <- fread(input = command, data.table = F)
+      temp <- fread(input = command, data.table = FALSE)
       temp <- arrange(temp, V1, V2, V3)
       temp1 <- bind_cols(temp1, temp$V6)
     }
@@ -84,7 +73,7 @@ GetPromoters <- function(uctable, upstream = 2000, downstream = 2000){
           temp3 <- data.frame(Symbol = paste(uniqid$geneName[i], '#', 1:length(temp2), sep=''),
                               Chrom = rep(temp[j], length(temp2)),
                               Strand = rep(temp1[k], length(temp2)),
-                              TSS = temp2, stringsAsFactors = F)
+                              TSS = temp2, stringsAsFactors = FALSE)
           uctable1 <- rbind(uctable1, temp3)
         }
       }
@@ -101,7 +90,8 @@ GetPromoters <- function(uctable, upstream = 2000, downstream = 2000){
 
 ## retrive chromsome length information from UCSC database.
 GetChromLength <- function(organism){
-  if(!organism %in% ShowAvailableOrg()[,2])
+  ShowAvailableOrg()
+  if(!organism %in% Organisms[,2])
     stop('Organism not found. Please call funcition ShowAvailabelOrg() to retrive a list of available organisms from UCSC. Remember to use accession code rather than the organism name directly.')
   ucsc_db <- src_mysql(organism, 'genome-mysql.cse.ucsc.edu', user = 'genome')
   Ref_Flat <- tbl(ucsc_db, sql("SELECT chrom, size FROM chromInfo"))
@@ -135,9 +125,10 @@ Getfasta <- function(fa, bed){
   system(command)
 }
 
-ConstructExRegions <- function(organism, promoter_anno, CpG = T){
+ConstructExRegions <- function(organism, promoter_anno, CpG = TRUE){
   if(CpG){
-    if(!organism %in% ShowAvailableOrg()[,2])
+    ShowAvailableOrg()
+    if(!organism %in% Organisms[,2])
       stop('Organism not found. Please call funcition ShowAvailabelOrg() to retrive a list of available organisms from UCSC. Remember to use accession code rather than the organism name directly.')
     ucsc_db <- src_mysql(organism, 'genome-mysql.cse.ucsc.edu', user = 'genome')
     CpGisland <- as.data.frame(tbl(ucsc_db, sql("SELECT chrom, chromStart, chromEnd FROM cpgIslandExtUnmasked")))
@@ -158,13 +149,13 @@ FilterRegions <- function(bed, fasta, Exbed, cores = detectCores()){
   return(Filter_regions)
 }
 
-CountFreqency <- function(fasta, CG = T, ATCG = T){
-  fasta_file <- readDNAStringSet(fasta,use.names = T)
+CountFreqency <- function(fasta, CG = TRUE, ATCG = TRUE){
+  fasta_file <- readDNAStringSet(fasta,use.names = TRUE)
   Freqmat <- data.frame()
   if(CG)
-    Freqmat$CG <- letterFrequency(fasta_file, letters = 'CG', as.prob = T)
+    Freqmat$CG <- letterFrequency(fasta_file, letters = 'CG', as.prob = TRUE)
   if(ATCG)
-    Freqmat$ATCG <- letterFrequency(fasta_file, letters = 'ATCG', as.prob = T)
+    Freqmat$ATCG <- letterFrequency(fasta_file, letters = 'ATCG', as.prob = TRUE)
   return(Freqmat)
 }
 
@@ -201,7 +192,7 @@ IdentifyBackground <- function(organism, bed_path, binsize = 100, promo_bed, cor
   chromlen <- GetChromLength(organism)
   bed_100bp <- CreateWindows(chromlen, binsize)
   bed_path <- paste(bed_path, '/bed_100bp.bed', sep = '')
-  write.table(bed_100bp, paste(bed_path, '/bed_100bp.bed', sep = ''), quote = F, sep = '\t', row.names = F)
+  write.table(bed_100bp, paste(bed_path, '/bed_100bp.bed', sep = ''), quote = FALSE, sep = '\t', row.names = FALSE)
   Exclude_regions <- ConstructExRegions(organism, promo_bed)
   Getfasta(fa, bed_path)
   bed_100bp_filtered <- FilterRegions(bed_100bp, gsub('.bed', '.fa', bed_path), Exclude_regions) 

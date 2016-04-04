@@ -6,11 +6,11 @@
 \description{
   Generate graph of enrichment of GC content grouped by methylation levels}
 \usage{
-MethyEnrich(bed_count, fa)
+MethyEnrich(bin_count, fa)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{bed_count}{
+  \item{bin_count}{
   A vector containing number of reads mapped to each bin. See vignettes for details
   }
   \item{fa}{
@@ -27,7 +27,7 @@ MethyEnrich(bed_count, fa)
   Yuanhang Liu
 }
 \seealso{
-  \code{\link{bedtoolsr}}, \code{\link{CreateWindows}}
+  \code{\link{bedtoolsr}}
 }
 \examples{
   \dontrun{

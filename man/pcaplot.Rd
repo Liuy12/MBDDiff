@@ -5,7 +5,7 @@
     Generate 2d or 3d sample relationship plot based on principal component analysis, multidimensional scaling, etc. 
 }
 \usage{
-pcaplot(x, subset = NULL, cv.Th = 0.1, var.Th = 0, mean.Th = 0, standardize = TRUE, method = c("cluster", "mds", "pca"), dimension = c(1, 2, 3), color = "black", princurve = F, lwd = 1, starts = NULL, col.curve = "red", text, main = NULL, psi = 4, type = "p", ...)
+pcaplot(x, subset = NULL, cv.Th = 0.1, var.Th = 0, mean.Th = 0, standardize = TRUE, method = c("cluster", "mds", "pca"), dimension = c(1, 2, 3), color = "black", princurve = FALSE, lwd = 1, starts = NULL, col.curve = "red", text = TRUE, main = NULL, psi = 4, type = "p", ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -84,7 +84,7 @@ If method = 'mds' or 'pca', a data.frame containing user specified number of pri
     \dontrun{
         data(PromoterCount)
         Condition <- c(rep('C1', 3), rep('C2', 3))
-        TestStat <- MBDDiff(PromoterCount, BackgroundCount, Condition)
+        TestStat <- MBDDiff(Promoter, Background, Condition)
         MBD <- TestStat[[1]]
         Norm_count <- counts(MBD, normalized = TRUE)
         pcaplot(Norm_count, cv.Th = 0.1, method = 'pca', dimension = c(1,2,3), princurve = TRUE, starts = c(1,1,1,0,0,0)) 

@@ -1,6 +1,5 @@
 \name{MBDDiff-package}
 \alias{MBDDiff-package}
-\alias{MBDDiff}
 \docType{package}
 \title{
 \packageTitle{MBDDiff}

@@ -1,5 +1,6 @@
 \name{ShowAvailableOrg}
 \alias{ShowAvailableOrg}
+\alias{Organisms}
 \title{
   Show a list of available organisms from UCSC database
 }
