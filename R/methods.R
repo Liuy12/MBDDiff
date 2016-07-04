@@ -33,25 +33,38 @@ bedtoolsr <- function(bam = NULL, bamdir = NULL, bed) {
   }
   else
     bamfiles <- grep('.bam', dir(bamdir), value = TRUE)
-  if (length(bamfiles))
+  if (!length(bamfiles))
     stop('There are no bam files in the directory')
   else{
     bamfiles <- paste(bamdir, '/', bamfiles, sep = '')
     temp1 <- c()
-    for (i in length(bamfiles)) {
+    for (i in 1:length(bamfiles)) {
       command <-
         paste('coverageBed -abam', bamfiles[i], '-b', bed, sep = ' ')
-      cat('processing: ', bamfiles[i], sep = '\t')
+      cat('processing: ', bamfiles[i], '\n')
       temp <- fread(input = command, data.table = FALSE)
       temp <- arrange(temp, V1, V2, V3)
-      temp1 <- bind_cols(temp1, temp$V6)
+      temp1 <- bind_cols2(temp1, temp[6])
     }
-    rownames(temp1) <- temp$V4
+    temp1 <- as.data.frame(temp1)
+    colnames(temp1) <- paste('S', 1:ncol(temp1), sep = '')
+    temp1$name <- temp$V4
+    temp <- arrange(temp, name)
     return(list(count = temp1,
                 gaplength = temp[,(ncol(temp) - 1)]))
   }
 }
 
+bind_cols2 <- function(a, b){
+  if(!length(a) | !length(b)){
+    if(!length(a))
+      return(b)
+    if(!length(b))
+      return(a) 
+  }
+  else
+    return(bind_cols(a, b))
+}
 
 GetPromoters <-
   function(uctable, upstream = 2000, downstream = 2000) {
@@ -101,6 +114,8 @@ GetPromoters <-
       name = uctable1$Symbol,
       Strand = uctable1$Strand
     )
+    Promoter4k <- Promoter4k[!duplicated(Promoter4k$name),]
+    Promoter4k$chromStart[Promoter4k$chromStart < 0] <- 0
     return(Promoter4k)
   }
 
@@ -301,20 +316,30 @@ CalculateTPM <- function(dataMat, gaplength) {
 }
 
 Summerizebg <- function(dataMat_bg, gaplength) {
-  dataMat_bg$TPM <- CalculateTPM(dataMat_bg, gaplength)
+  dataMat_bg$TPM <- CalculateTPM(dataMat_bg[, 1:(ncol(dataMat_bg) -1) ], gaplength)
   dataMat_bg <- dataMat_bg %>%
     group_by(name) %>%
     arrange(TPM) %>%
-    dplyr::slice(1:40) %>%
+    dplyr::slice(1:40)
+  dataMat_bg <- dataMat_bg %>%
+    group_by(name) %>%
     summarise_each(funs(sum)) %>%
     arrange(name) %>%
-    select(-1)
+    select(-TPM)
 }
 
 MBDDiff <-
   function(promoter, background, conditions, method = "pooled",
            sharingMode = "maximum", fitType = "local", pvals_only = FALSE, paraMethod =
              'NP') {
+    conditions <- as.factor(conditions)
+    rownames(promoter) <- promoter$name
+    promoter <- as.data.frame(promoter %>% select(-name))
+    rownames(background) <- background$name
+    background <- as.data.frame(background %>% select(-name))
+    commonGenes <- intersect(rownames(promoter), rownames(background))
+    promoter <- promoter[rownames(promoter) %in% commonGenes, ]
+    background <- background[rownames(background) %in% commonGenes,]
     MBD <- XBSeqDataSet(promoter, background, conditions)
     MBD <- estimateRealCount(MBD)
     MBD <- estimateSizeFactors(MBD)
